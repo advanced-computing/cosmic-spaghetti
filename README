@@ -1,7 +1,52 @@
-echo "# cosmic-spaghetti" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/advanced-computing/cosmic-spaghetti.git
-git push -u origin main
+## Group: Cosmic Sphagetti
+
+## Students Names:
+- Mery Hotma Situmorang (mhs2231)
+- Najihah Fikri (na3183)
+ 
+## Proposal: Housing Affordability & Evictions in New York City
+
+### What dataset are you going to use?
+NYC Open Data’s Evictions - We are going to use Evictions data from NYC Open Data. 
+This dataset lists executed residential evictions across the five boroughs of New York City since 2017 
+and contains detailed information that can be sorted by multiple categories, including court index number, borough etc.
+[Link] (https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4/about_data)
+
+ACS Census on Income Data Based on Boroughs – We are planning to use data from the U.S. Census Bureau’s American Community Survey (ACS). 
+Specifically, we will use the dataset Median Household Income,aggregated at the county level, which corresponds to New York City’s five boroughs. 
+This dataset provides annual estimates of median household income and allows for comparison across boroughs.
+However, these datasets are updated every year or every five years.
+
+### What are your research question(s)?
+Is there a relationship between borough-level median household income and eviction rates in New York City? 
+> We’re looking to explore whether boroughs with lower median household incomes experience higher rates of executed evictions, 
+> and whether these patterns vary over time.
+Which NYC boroughs have the highest eviction rates (evictions per 1,000 renter households)?
+How have eviction rates by borough changed over time since 2017?
+Do evictions exhibit seasonal patterns across boroughs (e.g., summer vs. winter spikes)?
+
+### What's the link to your notebook?
+https://github.com/advanced-computing/cosmic-spaghetti/blob/main/cosmic-spaghetti-notebook-housing.ipynb
+
+### What's your target visualization?
+To answer these questions, we are planning to create the following visualisations:
+(1) A choropleth map of New York City boroughs displaying eviction rates per 1,000 renter households, 
+allowing for spatial comparison of eviction burden across the city.
+(2) A bar chart showing the eviction rate per 1,000 renter households by borough, providing a clear comparison across boroughs.
+(3) A line chart illustrating monthly eviction trends by borough, used to identify seasonality and changes over time. 
+
+### What are your known unknowns?
+Time to finish the project (we commit to make it an agile project, however we know that there is a deadline of the project)
+Other factors that we can explore regarding this issue and whether we can find data to support it
+
+##What challenges do you anticipate?
+1. We would need other datasets to help us answer a policy question. For example, once we know that NYC has a housing crisis. 
+2. How can we then use the current Evictions data set to help policymakers in making decisions about housing policies and potential housing developments? 
+3. Furthermore, how can this dataset be complemented with other datasets on housing in NYC (e.g. renters vs owners, affordable housing developments, etc.). 
+Are these datasets available, and are they updated consistently?
+4. The existing dataset might be too narrow focused for making a dashboard that giving a broad information 
+(we need another aspects of housing to add to make the dashboard a little more complex)
+5. We are also considering another project to create a dashboard for the Department of Building NYC Project.
+[Link to other Proposal](https://docs.google.com/document/d/1-7YlREUBS8P7rHXURzWfG83eeOqIBWie8olyYbPcFrU/edit?usp=sharing) 
+This dashboard might help policymakers plan and make better decisions, such as channeling the appropriate resources to maintain existing buildings and identifying boroughs with high violations.
+Policy knowledge regarding the eviction and housing in general
