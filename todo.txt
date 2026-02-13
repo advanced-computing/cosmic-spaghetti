@@ -1,0 +1,36 @@
+Get Dataset From API
+[ ] DOB Job Application Filings https://data.cityofnewyork.us/resource/ic3t-wcy2.json
+[ ] DOB Violations https://data.cityofnewyork.us/resource/3h2n-5cm9.json
+[ ] DOB Complaints Received https://data.cityofnewyork.us/resource/eabe-havv.json
+[ ] DOB Disciplinary Actions https://data.cityofnewyork.us/resource/ndq3-kuef.json
+[ ] NYC Evictons Data https://data.cityofnewyork.us/resource/6z8x-wfk4.json
+
+DATA CLEANING
+[ ] Check data types for time variable, fix it needed
+[ ] CHeck null variable, fix if needed
+[ ] Check whitespace in borough variable and fix if needed
+[ ] Change borough variable to match https://data.cityofnewyork.us/resource/5crt-au7u.geojson
+
+STATISTICAL ANALYSIS
+[ ] Number of Job Listing by Borough, Type of Job and Year
+[ ] Number of Violations by Borough, Type of Violations and Year
+[ ] Number of Complaints by Borough, Type of Complaints and Year
+[ ] Number of Disciplinary Actions by Borough, Type of Disciplinary Actions and Year
+[ ] Number of Evictions by Borough, Type of Evictions and Year
+
+Visualization
+Choropleth Map of
+[ ] Job by Borough
+[ ] Violations by Borough
+[ ] Complaints by Borough
+Line chart of
+[ ] Violations number each month
+[ ] Disciplinary actions (weekly / monthly comparison)
+[ ] Construction trend over time by job type
+[ ] Evictions by borough overtime
+[ ] Evictions by building type overtime
+Bar chart of: 
+[ ] Average duration of issuing permit per job type
+[ ] Number of permit by borough, 
+[ ] Borough with highest permit by job type
+[ ] Most common violation categories
