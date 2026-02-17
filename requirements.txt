@@ -2,6 +2,7 @@ ipykernel
 pandas
 plotly
 requests
+streamlit
 
 # needed for plotly
 nbformat
