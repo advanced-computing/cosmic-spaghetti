@@ -2,11 +2,11 @@ ipykernel
 pandas
 plotly
 requests
-streamlit
+streamlit>=1.32
 
 # needed for plotly
 nbformat
 statsmodels
 
 #install jupyternotebook
-jupyter-book==1.*
+#jupyter-book==1.*
