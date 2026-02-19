@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 
 st.set_page_config(page_title="NYC Job Filings", layout="wide")
-st.title("NYC Building Job Filings (2025 → Today)")
+st.title("NYC Building Job Filings (2026 → Today)")
 
 url = "https://data.cityofnewyork.us/resource/w9ak-ipjd.json"
 limit = 5000
@@ -17,8 +17,8 @@ status_col = "filing_status"
 jobtype_col = "job_type"
 borough_col = "borough"
 
-# filter for 2025 to today
-start_date = "2025-01-01T00:00:00"
+# filter for 2026 to today
+start_date = "2026-01-01T00:00:00"
 end_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
 
@@ -46,10 +46,10 @@ def load_paginated_date_filtered(url: str) -> pd.DataFrame:
 
 
 # load data
-with st.spinner("Loading data (pagination + 2025→today filter)..."):
+with st.spinner("Loading data (pagination + 2026→today filter)..."):
     df_job = load_paginated_date_filtered(url)
 
-st.success(f"Loaded {len(df_job):,} rows (2025 → today)")
+st.success(f"Loaded {len(df_job):,} rows (2026 → today)")
 
 # show first 5 rows to confirm data loaded correctly and columns are as expected
 st.dataframe(df_job.head(5), use_container_width=True)
