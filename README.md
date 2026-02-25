@@ -43,6 +43,8 @@ allowing for spatial comparison of eviction burden across the city.
 Time to finish the project (we commit to make it an agile project, however we know that there is a deadline of the project)
 Other factors that we can explore regarding this issue and whether we can find data to support it
 
+
+
 ##What challenges do you anticipate?
 1. We would need other datasets to help us answer a policy question. For example, once we know that NYC has a housing crisis. 
 2. How can we then use the current Evictions data set to help policymakers in making decisions about housing policies and potential housing developments? 
