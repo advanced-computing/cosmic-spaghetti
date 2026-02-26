@@ -4,6 +4,9 @@ plotly
 requests
 streamlit>=1.32
 
+# testing
+pytest
+
 # needed for plotly
 nbformat
 statsmodels
