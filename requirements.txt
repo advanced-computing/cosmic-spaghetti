@@ -6,6 +6,7 @@ streamlit>=1.32
 
 # testing
 pytest
+pytest-cov
 
 # needed for plotly
 nbformat
@@ -13,3 +14,22 @@ statsmodels
 
 #install jupyternotebook
 #jupyter-book==1.*
+
+
+#panderas
+pandera[pandas]
+pandera[hypotheses]   # hypothesis checks
+pandera[io]           # yaml/script schema io utilities
+pandera[frictionless] # frictionless schema serialization/deserialization
+pandera[strategies]   # data synthesis strategies
+pandera[mypy]         # enable static type-linting of pandas
+pandera[fastapi]      # fastapi integration
+pandera[dask]         # validate dask dataframes
+pandera[pyspark]      # validate pyspark dataframes
+pandera[modin]        # validate modin dataframes
+pandera[modin-ray]    # validate modin dataframes with ray
+pandera[modin-dask]   # validate modin dataframes with dask
+pandera[geopandas]    # validate geopandas geodataframes
+pandera[polars]       # validate polars dataframes
+pandera[ibis]         # validate ibis tables
+
