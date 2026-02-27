@@ -7,6 +7,7 @@ streamlit>=1.32
 # testing
 pytest
 pytest-cov
+pytest--cov
 
 # needed for plotly
 nbformat
