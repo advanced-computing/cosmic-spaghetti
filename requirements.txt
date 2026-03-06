@@ -7,11 +7,11 @@ streamlit>=1.32
 # testing
 pytest
 pytest-cov
-pytest--cov
 
 # needed for plotly
 nbformat
 statsmodels
+pandera[pandas]
 
 #install jupyternotebook
 #jupyter-book==1.*
