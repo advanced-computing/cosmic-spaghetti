@@ -5,6 +5,8 @@ import re
 import pandas as pd
 import requests
 
+from functions.permit_validation import permit_schema
+
 borough_code = {
     "1": "Manhattan",
     "2": "Bronx",
@@ -90,7 +92,9 @@ def load_paginated(  # noqa: PLR0913
             all_records = all_records[:max_rows]
             break
 
-    return pd.json_normalize(all_records)
+    df = pd.json_normalize(all_records)
+    df = permit_schema.validate(df)
+    return df
 
 
 # chage borough code to borough name
