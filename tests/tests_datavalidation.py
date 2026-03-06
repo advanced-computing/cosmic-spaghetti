@@ -78,10 +78,3 @@ def test_evictions_schema():
 
 
 # Used pytest and it passed using tests/datavalidation.py
-
-# Write up: We are still deciding which key variables/columns from the eviction dataset are
-# of interest to us, but we chose court index number, executed date, borough, residential/commercial,
-# community board, council district and the coordinates.
-
-# We assumed that the court index numbers are present, the dates are in 2025,
-# bourghs are NY boroughs, and consistent building type categories.
