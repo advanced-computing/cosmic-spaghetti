@@ -1,8 +1,9 @@
-import streamlit as st
+from datetime import datetime
+
 import pandas as pd
 import plotly.express as px
 import requests
-from datetime import datetime
+import streamlit as st
 
 st.set_page_config(page_title="NYC Evictions", layout="wide")
 st.title("NYC Evictions Dashboard")
@@ -55,22 +56,16 @@ st.dataframe(df_evic.head(5), use_container_width=True)
 borough_options = sorted(df_evic[borough_col].dropna().astype(str).unique().tolist())
 building_options = sorted(df_evic[building_col].dropna().astype(str).unique().tolist())
 
-selected_borough = st.multiselect(
-    "Select Borough(s)", borough_options, default=borough_options
-)
+selected_borough = st.multiselect("Select Borough(s)", borough_options, default=borough_options)
 selected_building = st.multiselect(
     "Select Building Type(s)", building_options, default=building_options
 )
 
 df_filtered = df_evic.copy()
 if selected_borough:
-    df_filtered = df_filtered[
-        df_filtered[borough_col].astype(str).isin(selected_borough)
-    ]
+    df_filtered = df_filtered[df_filtered[borough_col].astype(str).isin(selected_borough)]
 if selected_building:
-    df_filtered = df_filtered[
-        df_filtered[building_col].astype(str).isin(selected_building)
-    ]
+    df_filtered = df_filtered[df_filtered[building_col].astype(str).isin(selected_building)]
 
 st.caption(f"Filtered rows: {len(df_filtered):,}")
 st.dataframe(df_filtered.head(20), use_container_width=True)
