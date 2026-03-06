@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 import pandas as pd
 import requests
@@ -50,13 +49,13 @@ def discover_columns(url: str, timeout: int = 30) -> set[str]:
 
 
 # API pagination
-def load_paginated(
+def load_paginated(  # noqa: PLR0913
     url: str,
     desired_columns: list[str],
     *,
     limit: int = 50_000,
     max_rows: int = 250_000,
-    order_by: Optional[str] = None,
+    order_by: str | None = None,
     timeout: int = 60,
 ) -> pd.DataFrame:
 
@@ -107,7 +106,7 @@ def filter_last_12_months(
     df: pd.DataFrame,
     date_col: str,
     *,
-    today: Optional[pd.Timestamp] = None,
+    today: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
 
     df2 = df.copy()
@@ -117,26 +116,23 @@ def filter_last_12_months(
     df2[date_col] = pd.to_datetime(df2[date_col], errors="coerce")
     df2 = df2.dropna(subset=[date_col])
 
-    if today is None:
-        today = pd.Timestamp.today().normalize()
-    else:
-        today = pd.Timestamp(today).normalize()
+    today = pd.Timestamp.today().normalize() if today is None else pd.Timestamp(today).normalize()
 
     last_year = today - pd.DateOffset(years=1)
     return df2[df2[date_col].between(last_year, today)]
 
 
 # applying other filters
-def apply_filter(
+def apply_filter(  # noqa: PLR0913
     df: pd.DataFrame,
     *,
-    borough_col: Optional[str] = None,
-    selected_borough: Optional[list[str]] = None,
-    type_col: Optional[str] = None,
-    selected_types: Optional[list[str]] = None,
-    status_col: Optional[str] = None,
-    selected_status: Optional[list[str]] = None,
-    today: Optional[pd.Timestamp] = None,
+    borough_col: str | None = None,
+    selected_borough: list[str] | None = None,
+    type_col: str | None = None,
+    selected_types: list[str] | None = None,
+    status_col: str | None = None,
+    selected_status: list[str] | None = None,
+    today: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     out = df.copy()
 
@@ -152,12 +148,12 @@ def apply_filter(
     return out
 
 
-def permit_timeseries_by_borough(
+def permit_timeseries_by_borough(  # noqa: PLR0913
     df: pd.DataFrame,
     *,
     date_col: str,
     borough_col: str = "borough",
-    status_col: Optional[str] = None,
+    status_col: str | None = None,
     approved_values: tuple[str, ...] = ("APPROVED", "ISSUED"),
     freq: str = "MS",
 ) -> pd.DataFrame:

@@ -15,17 +15,9 @@ from functions.permit_page import (
 st.set_page_config(page_title="NYC Building Job", layout="wide")
 st.title("NYC Building Job (Last 12 Months)")
 
-url = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"  # url api soda 2 (as of february 25th)
+url = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
+# url api soda 2 (as of february 25th)
 limit = 5000
-
-import json
-
-import requests
-
-# st.subheader("Debug: raw API sample (first 1 row)")
-# sample = requests.get(url, params={"$limit": 1}).json()
-# st.write("Keys in first row:", sorted(sample[0].keys()) if sample else "No rows")
-# st.json(sample[0] if sample else {})
 
 
 # choose colums to use
@@ -68,7 +60,7 @@ if df.empty:
     st.write("Using date colum", date_col)
     st.stop()
 
-st.success(f"Loaded{len(df):,} rows (for the last 12 months) using `{date_col}`")
+st.success(f"Loaded {len(df):,} rows (for the last 12 months) using `{date_col}`")
 st.dataframe(df.head(5), use_container_width=True)
 
 st.write("Loaded DF columns:", df.columns.tolist())
@@ -81,9 +73,7 @@ st.subheader("Filters")
 
 if borough_col:
     borough_options = sorted(df[borough_col].dropna().astype(str).unique().tolist())
-    selected_borough = st.multiselect(
-        "Borough", borough_options, default=borough_options
-    )
+    selected_borough = st.multiselect("Borough", borough_options, default=borough_options)
 else:
     selected_borough = None
     st.info("No borough column found to filter by")
@@ -99,9 +89,7 @@ else:
 
 if status_col:
     status_options = sorted(df[status_col].dropna().astype(str).unique().tolist())
-    selected_status = st.multiselect(
-        "Permit Status", status_options, default=status_options
-    )
+    selected_status = st.multiselect("Permit Status", status_options, default=status_options)
 else:
     selected_status = None
 
@@ -115,7 +103,7 @@ df_filtered = apply_filter(
     selected_status=selected_status,
 )
 
-st.caption(f"Filtered rows:{len(df_filtered):,}")
+st.caption(f"Filtered rows: {len(df_filtered):,}")
 st.dataframe(df_filtered.head(5), use_container_width=True)
 
 st.subheader("Approved and Issued Building Job Permits by Borough Over Time")
