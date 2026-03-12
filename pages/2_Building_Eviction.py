@@ -45,6 +45,12 @@ def load_paginated_date_filtered(url: str) -> pd.DataFrame:
     return df
 
 
+def get_geojson():
+    geojson_url = "https://raw.githubusercontent.com/dwillis/nyc-maps/master/boroughs.geojson"
+    response = requests.get(geojson_url)
+    return response.json()
+
+
 # load data
 with st.spinner("Loading eviction data (pagination + 2025→today filter)..."):
     df_evic = load_paginated_date_filtered(url)
@@ -72,6 +78,11 @@ st.dataframe(df_filtered.head(20), use_container_width=True)
 
 # --- Bar chart: Evictions by Borough ---
 st.subheader("Evictions by Borough (Filtered)")
+st.info(
+    "Currently showing borough-level data. "
+    "Community District (sub-borough) map is under development and will be added soon, as I am "
+    "still looking for the geojson for sub-borough."
+)
 
 counts = df_filtered[borough_col].fillna("Missing").value_counts().reset_index()
 counts.columns = ["Borough", "Total Evictions"]
@@ -86,3 +97,58 @@ fig = px.bar(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+# Borough Map
+st.subheader("Evictions by Borough (Map)")
+
+if not df_filtered.empty:
+    nyc_geo = get_geojson()
+
+    borough_counts = df_filtered[borough_col].value_counts().reset_index()
+
+    borough_counts.columns = ["Borough", "Evictions"]
+
+    borough_counts["Borough"] = borough_counts["Borough"].str.strip().str.title()
+
+    fig_map = px.choropleth_mapbox(
+        borough_counts,
+        geojson=nyc_geo,
+        locations="Borough",
+        featureidkey="properties.BoroName",
+        color="Evictions",
+        color_continuous_scale="Reds",
+        mapbox_style="carto-positron",
+        zoom=9.5,
+        center={"lat": 40.7128, "lon": -74.0060},
+        title="Evictions by Borough (Map)",
+        hover_name="Borough",
+        hover_data={"Evictions": True},
+    )
+
+    fig_map.update_layout(margin={"r": 0, "t": 40, "l": 0, "b": 0})
+    st.plotly_chart(fig_map, use_container_width=True)
+
+# Evictions Over Time
+st.subheader("Evictions Over Time")
+
+bucket = st.selectbox("Time bucket", ["Monthly", "Weekly", "Daily"], index=0)
+
+freq_map = {"Monthly": "M", "Weekly": "W-MON", "Daily": "D"}
+
+freq = freq_map[bucket]
+
+df_ts = df_filtered.copy()
+df_ts["Period"] = df_ts[date_col].dt.to_period(freq).dt.to_timestamp()
+
+ts = df_ts.groupby(["Period", borough_col]).size().reset_index(name="Evictions")
+
+fig_ts = px.line(
+    ts,
+    x="Period",
+    y="Evictions",
+    color=borough_col,
+    markers=True,
+    title="Evictions by Borough Over Time",
+)
+
+st.plotly_chart(fig_ts, use_container_width=True)
