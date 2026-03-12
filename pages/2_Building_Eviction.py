@@ -15,45 +15,56 @@ date_col = "executed_date"
 borough_col = "borough"
 building_col = "residential_commercial_ind"
 
-# Only 2025 data
 start_date = "2025-01-01T00:00:00"
 end_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
 
-# Loading data from NYC Open Data
+# --- Optimized data loader ---
 @st.cache_data(ttl=3600)
-def load_paginated_date_filtered(url: str) -> pd.DataFrame:
-    all_record = []
+def load_paginated_data(url: str) -> pd.DataFrame:
+    all_records = []
     offset = 0
+    session = requests.Session()  # persistent session
+
+    select_cols = f"{date_col},{borough_col},{building_col}"
     where = f"{date_col} >= '{start_date}' AND {date_col} <= '{end_date}'"
 
+    # Progress bar
+    progress_bar = st.progress(0)
+
     while True:
-        params = {"$limit": limit, "$offset": offset, "$where": where}
-        r = requests.get(url, params=params)
+        params = {"$limit": limit, "$offset": offset, "$where": where, "$select": select_cols}
+        r = session.get(url, params=params)
         r.raise_for_status()
         chunk = r.json()
         if not chunk:
             break
-        all_record.extend(chunk)
+        all_records.extend(chunk)
         offset += limit
+        # Update progress bar visually (approximate)
+        progress_bar.progress(min(offset / 50000, 1.0))  # assume ~50k rows max
 
-    df = pd.json_normalize(all_record)
-    # convert executed_date to datetime
+    progress_bar.progress(1.0)
+    df = pd.json_normalize(all_records)
+
+    # Convert date
     df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-    df = df.dropna(subset=[date_col])  # drop invalid dates
+    df = df.dropna(subset=[date_col])
     df["year"] = df[date_col].dt.year
     return df
 
 
+# --- Cache GeoJSON ---
+@st.cache_data(ttl=86400)
 def get_geojson():
     geojson_url = "https://raw.githubusercontent.com/dwillis/nyc-maps/master/boroughs.geojson"
     response = requests.get(geojson_url)
     return response.json()
 
 
-# load data
+# --- Load data ---
 with st.spinner("Loading eviction data (pagination + 2025→today filter)..."):
-    df_evic = load_paginated_date_filtered(url)
+    df_evic = load_paginated_data(url)
 
 st.success(f"Loaded {len(df_evic):,} rows (2025 → today)")
 st.dataframe(df_evic.head(5), use_container_width=True)
@@ -76,12 +87,11 @@ if selected_building:
 st.caption(f"Filtered rows: {len(df_filtered):,}")
 st.dataframe(df_filtered.head(20), use_container_width=True)
 
-# --- Bar chart: Evictions by Borough ---
+# --- Evictions by Borough (Bar) ---
 st.subheader("Evictions by Borough (Filtered)")
 st.info(
     "Currently showing borough-level data. "
-    "Community District (sub-borough) map is under development and will be added soon, as I am "
-    "still looking for the geojson for sub-borough."
+    "Community District (sub-borough) map is under development."
 )
 
 counts = df_filtered[borough_col].fillna("Missing").value_counts().reset_index()
@@ -95,19 +105,15 @@ fig = px.bar(
     color="Borough",
     color_discrete_sequence=px.colors.qualitative.Dark24_r,
 )
-
 st.plotly_chart(fig, use_container_width=True)
 
-# Borough Map
+# --- Evictions by Borough (Map) ---
 st.subheader("Evictions by Borough (Map)")
 
 if not df_filtered.empty:
     nyc_geo = get_geojson()
-
     borough_counts = df_filtered[borough_col].value_counts().reset_index()
-
     borough_counts.columns = ["Borough", "Evictions"]
-
     borough_counts["Borough"] = borough_counts["Borough"].str.strip().str.title()
 
     fig_map = px.choropleth_mapbox(
@@ -124,22 +130,17 @@ if not df_filtered.empty:
         hover_name="Borough",
         hover_data={"Evictions": True},
     )
-
     fig_map.update_layout(margin={"r": 0, "t": 40, "l": 0, "b": 0})
     st.plotly_chart(fig_map, use_container_width=True)
 
-# Evictions Over Time
+# --- Evictions Over Time ---
 st.subheader("Evictions Over Time")
-
 bucket = st.selectbox("Time bucket", ["Monthly", "Weekly", "Daily"], index=0)
-
 freq_map = {"Monthly": "M", "Weekly": "W-MON", "Daily": "D"}
-
 freq = freq_map[bucket]
 
 df_ts = df_filtered.copy()
 df_ts["Period"] = df_ts[date_col].dt.to_period(freq).dt.to_timestamp()
-
 ts = df_ts.groupby(["Period", borough_col]).size().reset_index(name="Evictions")
 
 fig_ts = px.line(
@@ -150,5 +151,4 @@ fig_ts = px.line(
     markers=True,
     title="Evictions by Borough Over Time",
 )
-
 st.plotly_chart(fig_ts, use_container_width=True)
