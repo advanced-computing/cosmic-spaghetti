@@ -1,3 +1,5 @@
+# permit_page.py v2 — includes date_col
+
 from __future__ import annotations
 
 import re
