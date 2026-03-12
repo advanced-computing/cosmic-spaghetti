@@ -62,9 +62,9 @@ st.divider()
 # Research Questions
 with st.container(border=True):
     st.subheader("Research Questions")
-    st.write("""Following the feedback on our initial proposal, we are planning to combine different datasets 
-to better understand relationships between construction activity, housing conditions, and 
-eviction trends across New York City.
+    st.write("""Following the feedback on our initial proposal, we are planning to combine
+             different datasets to better understand relationships between construction activity,
+             housing conditions, and eviction trends across New York City.
 """)
     st.markdown("""
 **1. How does construction activity relate to eviction patterns across NYC boroughs?**
