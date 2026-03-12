@@ -5,6 +5,8 @@ import plotly.express as px
 import requests
 import streamlit as st
 
+# temporary fix
+import functions.permit_page as _pp  # noqa: F401
 from functions.permit_page import (
     apply_filter,
     filter_last_12_months,
@@ -14,6 +16,7 @@ from functions.permit_page import (
 )
 
 st.set_page_config(page_title="NYC Building Job", layout="wide")
+st.write("permit_page location:", _pp.__file__)
 st.title("NYC Building Job (Last 12 Months)")
 
 URL = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
