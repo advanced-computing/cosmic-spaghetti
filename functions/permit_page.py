@@ -7,19 +7,6 @@ import requests
 
 from functions.permit_validation import permit_schema
 
-borough_code = {
-    "1": "Manhattan",
-    "2": "Bronx",
-    "3": "Brooklyn",
-    "4": "Queens",
-    "5": "Staten Island",
-    1: "Manhattan",
-    2: "Bronx",
-    3: "Brooklyn",
-    4: "Queens",
-    5: "Staten Island",
-}
-
 
 # return first column name from dataset (anticipating changing in dataset)
 def first_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
@@ -29,7 +16,7 @@ def first_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
     return None
 
 
-# discover desired coliums
+# discover desired columns
 def discover_columns(url: str, timeout: int = 30) -> set[str]:
 
     m = re.search(r"/resource/([a-z0-9]{4}-[a-z0-9]{4})\.json", url)
@@ -38,9 +25,10 @@ def discover_columns(url: str, timeout: int = 30) -> set[str]:
 
     dataset_id = m.group(1)
     meta_url = f"https://data.cityofnewyork.us/api/views/{dataset_id}.json"
-    disc = requests.get(meta_url, timeout=timeout)
-    disc.raise_for_status()
-    meta = disc.json()
+
+    r = requests.get(meta_url, timeout=timeout)
+    r.raise_for_status()
+    meta = r.json()
 
     cols = set()
     for c in meta.get("columns", []):
@@ -53,13 +41,17 @@ def discover_columns(url: str, timeout: int = 30) -> set[str]:
 # API pagination
 def load_paginated(  # noqa: PLR0913
     url: str,
-    desired_columns: list[str],
+    desired_columns: list[str] | None = None,
     *,
-    limit: int = 50_000,
+    limit: int = 20_000,
     max_rows: int = 250_000,
-    order_by: str | None = None,
+    order_by: str = "issued_date",
+    date_col: str = "issued_date",
+    today: pd.Timestamp | None = None,
     timeout: int = 60,
 ) -> pd.DataFrame:
+    if desired_columns is None:
+        desired_columns = ["issued_date", "borough", "permit_type", "job_status"]
 
     cols = discover_columns(url, timeout=timeout)
     if not cols:
@@ -67,10 +59,19 @@ def load_paginated(  # noqa: PLR0913
 
     select_fields = [c for c in desired_columns if c in cols]
     if not select_fields:
-        select_fields = [sorted(list(cols))[0]]
+        return pd.DataFrame()
 
-    base_params: dict[str, str] = {"$select": ", ".join(select_fields)}
-    if order_by and order_by in cols:
+    today = pd.Timestamp.today().normalize() if today is None else pd.Timestamp(today).normalize()
+    last_year = today - pd.DateOffset(years=1)
+    last_year_str = last_year.strftime("%Y-%m-%dT00:00:00")
+    today_str = today.strftime("%Y-%m-%dT23:59:59")
+
+    base_params: dict[str, str] = {
+        "$select": ", ".join(select_fields),
+        "$where": f"{date_col} between '{last_year_str}' and '{today_str}'",
+    }
+
+    if order_by in cols:
         base_params["$order"] = f"{order_by} DESC"
 
     all_records: list[dict] = []
@@ -95,14 +96,6 @@ def load_paginated(  # noqa: PLR0913
     df = pd.json_normalize(all_records)
     df = permit_schema.validate(df)
     return df
-
-
-# chage borough code to borough name
-def map_borough(df: pd.DataFrame, borough_col: str = "borough") -> pd.DataFrame:
-    df2 = df.copy()
-    if borough_col in df2.columns:
-        df2[borough_col] = df2[borough_col].map(borough_code).fillna(df2[borough_col])
-    return df2
 
 
 # filter last 12 months

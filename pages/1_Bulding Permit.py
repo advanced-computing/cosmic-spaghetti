@@ -8,20 +8,15 @@ from functions.permit_page import (
     filter_last_12_months,
     first_column,
     load_paginated,
-    map_borough,
     permit_timeseries_by_borough,
 )
 
 st.set_page_config(page_title="NYC Building Job", layout="wide")
 st.title("NYC Building Job (Last 12 Months)")
 
-url = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
-# url api soda 2 (as of february 25th)
-limit = 5000
+URL = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
 
-
-# choose colums to use
-desired_columns = [
+DESIRED_COLUMNS = [
     "borough",
     "issued_date",
     "approved_date",
@@ -31,38 +26,42 @@ desired_columns = [
     "community_board",
 ]
 
-with st.spinner("Loading permits (pagination)..."):
-    df = load_paginated(
-        url,
-        desired_columns=desired_columns,
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_permits():
+    return load_paginated(
+        URL,
+        desired_columns=DESIRED_COLUMNS,
         limit=50_000,
-        max_rows=250_000,
+        max_rows=50_000,  # was 250_000 — main cause of slowness
         order_by="issued_date",
+        date_col="issued_date",
     )
+
+
+with st.spinner("Loading permits..."):
+    df = get_permits()
 
 if df.empty:
     st.error("No rows returned from API")
     st.stop()
 
 # detecting columns for 12 months filter
-
 date_col = first_column(df, ["issued_date", "approved_date", "expired_date"])
 if not date_col:
     st.error("Could not find suitable date columns for filtering")
-    st.write("Colums found:", df.columns.tolist())
+    st.write("Columns found:", df.columns.tolist())
     st.stop()
 
-df = map_borough(df, borough_col="borough")
 df = filter_last_12_months(df, date_col=date_col)
 
 if df.empty:
     st.error("No permits found in the last 12 months")
-    st.write("Using date colum", date_col)
+    st.write("Using date column:", date_col)
     st.stop()
 
-st.success(f"Loaded {len(df):,} rows (for the last 12 months) using `{date_col}`")
+st.success(f"Loaded {len(df):,} rows (last 12 months) using `{date_col}`")
 st.dataframe(df.head(5), use_container_width=True)
-
 st.write("Loaded DF columns:", df.columns.tolist())
 
 borough_col = "borough" if "borough" in df.columns else None
