@@ -90,8 +90,7 @@ st.dataframe(df_filtered.head(20), use_container_width=True)
 # --- Summary Metrics ---
 bucket = st.selectbox("Time bucket", ["Monthly", "Weekly", "Daily"], index=0)
 
-st.subheader(f"Summary of Evictions — Current {bucket} Period")
-
+st.subheader(f"Summary of Evictions — Current {bucket}")
 
 if not df_filtered.empty and date_col in df_filtered.columns:
     df_metrics = df_filtered.copy()
@@ -160,7 +159,7 @@ if not df_filtered.empty and date_col in df_filtered.columns:
     )
 
     col2.metric(
-        label=f"Borough with Highest Evictions",
+        label="Borough with Highest Evictions",
         value=top_boro,
         delta=boro_delta,
         border=True,
