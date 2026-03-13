@@ -87,6 +87,92 @@ if selected_building:
 st.caption(f"Filtered rows: {len(df_filtered):,}")
 st.dataframe(df_filtered.head(20), use_container_width=True)
 
+# --- Summary Metrics ---
+bucket = st.selectbox("Time bucket", ["Monthly", "Weekly", "Daily"], index=0)
+
+st.subheader(f"Summary of Evictions — Current {bucket} Period")
+
+
+if not df_filtered.empty and date_col in df_filtered.columns:
+    df_metrics = df_filtered.copy()
+    df_metrics[date_col] = pd.to_datetime(df_metrics[date_col], errors="coerce")
+
+    end_period = df_metrics[date_col].max()
+
+    offsets_map = {
+        "Monthly": pd.DateOffset(months=1),
+        "Weekly": pd.DateOffset(weeks=1),
+        "Daily": pd.DateOffset(days=1),
+    }
+
+    offsets = offsets_map[bucket]
+    period_label = bucket.lower().rstrip("ly")
+
+    start_period = end_period - offsets
+    start_prev = start_period - offsets
+
+    current = df_metrics[df_metrics[date_col] > start_period]
+    previous = df_metrics[
+        (df_metrics[date_col] > start_prev) & (df_metrics[date_col] <= start_period)
+    ]
+
+    # --- 1. Total evictions ---
+    current_total = len(current)
+    previous_total = len(previous)
+
+    if previous_total > 0:
+        total_pct = ((current_total - previous_total) / previous_total) * 100
+        total_delta = f"{total_pct:+.1f}%"
+    else:
+        total_delta = None
+
+    # --- 2. Borough with highest evictions ---
+    current_boro = current[borough_col].value_counts()
+    previous_boro = previous[borough_col].value_counts()
+
+    top_boro = current_boro.idxmax() if not current_boro.empty else "N/A"
+    top_boro_count = int(current_boro.max()) if not current_boro.empty else 0
+    prev_boro_count = int(previous_boro.get(top_boro, 0))
+    boro_delta = f"{top_boro_count - prev_boro_count:+,}"
+
+    # --- 3. Building type with highest evictions ---
+    current_build = current[building_col].value_counts()
+    previous_build = previous[building_col].value_counts()
+
+    top_build = current_build.idxmax() if not current_build.empty else "N/A"
+    top_build_count = int(current_build.max()) if not current_build.empty else 0
+    prev_build_count = int(previous_build.get(top_build, 0))
+
+    if prev_build_count > 0:
+        build_pct = ((top_build_count - prev_build_count) / prev_build_count) * 100
+        build_delta = f"{build_pct:+.1f}%"
+    else:
+        build_delta = None
+
+    # --- Display metrics ---
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        label=f"Total Evictions (vs previous {period_label})",
+        value=f"{current_total:,}",
+        delta=total_delta,
+        border=True,
+    )
+
+    col2.metric(
+        label=f"Borough with Highest Evictions",
+        value=top_boro,
+        delta=boro_delta,
+        border=True,
+    )
+
+    col3.metric(
+        label="Most Affected Building Type",
+        value=top_build,
+        delta=build_delta,
+        border=True,
+    )
+
 # --- Evictions by Borough (Bar) ---
 st.subheader("Evictions by Borough (Filtered)")
 st.info(
