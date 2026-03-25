@@ -19,10 +19,10 @@ with st.container(border=True):
     st.subheader("Main Datasets")
 
     st.markdown("""
-**1. DOB Job Application Filings**
-Records historical job applications in NYC such as job type (new building, demolition, etc.).
+**1. DOB-Now Job Permit**
+Records historical job permit in NYC such as work type (new building, demolition, etc.).
 Provides insights about construction patterns across NYC.
-[Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Job-Application-Filings/ic3t-wcy2/about_data)
+[Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-NOW-Build-Approved-Permits/rbx6-tga4/about_data)
 
 **2. NYC Evictions**
 Executed residential evictions across the five boroughs since 2017, sortable by borough,
@@ -112,6 +112,7 @@ with st.container(border=True):
 - Differences in geographic granularity across datasets (borough vs ZIP vs address level).
 - Difficulty joining datasets due to inconsistent formats or identifiers.
 - Uncertainty about how strong relationships between datasets will appear in the data.
+- Changes in API that affects functions and/or visualization pages.
 
 **Anticipated Challenges**
 
@@ -119,4 +120,5 @@ with st.container(border=True):
 - Handling large dataset sizes efficiently in the dashboard.
 - Designing visualizations that communicate complex relationships clearly without
   overwhelming users.
+- Understanding the difference of loading streamlit in local computer and web.
 """)
