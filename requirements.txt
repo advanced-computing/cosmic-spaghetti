@@ -13,7 +13,11 @@ nbformat
 statsmodels
 
 #data validation
-pandera[pandas] >=0.27.0
+pandera[pandas]>=0.27.0
 
 #install jupyternotebook
 #jupyter-book==1.*
+
+# big query
+pandas-gbq
+google-auth
