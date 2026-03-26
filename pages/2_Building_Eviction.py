@@ -1,10 +1,11 @@
 from datetime import datetime
-from google.cloud import bigquery
-from google.oauth2 import service_account
+
 import pandas as pd
 import plotly.express as px
 import requests
 import streamlit as st
+from google.cloud import bigquery
+from google.oauth2 import service_account
 
 st.set_page_config(page_title="NYC Evictions", layout="wide")
 st.title("NYC Evictions Dashboard")
