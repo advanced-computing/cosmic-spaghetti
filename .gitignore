@@ -203,3 +203,6 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
+
+# secrets
+.streamlit/secrets.toml
