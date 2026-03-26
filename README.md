@@ -56,3 +56,20 @@ Are these datasets available, and are they updated consistently?
 [Link to other Proposal](https://docs.google.com/document/d/1-7YlREUBS8P7rHXURzWfG83eeOqIBWie8olyYbPcFrU/edit?usp=sharing) 
 This dashboard might help policymakers plan and make better decisions, such as channeling the appropriate resources to maintain existing buildings and identifying boroughs with high violations.
 Policy knowledge regarding the eviction and housing in general
+
+# The App on A Glance
+(1) This app contains 3 pages (proposal, building permit and building eviction)
+(2) Pages are built by utilizing ```functions``` in ```functions``` page
+(3) Data validation and testing can be found in ```tests``` folder
+
+# Instruction
+
+## 1. Installation
+(1) Make sure you install all package by writing ``` pip install -r requirements.txt``` in command line
+
+## 2. Setting ```sectrets.toml```
+(1) One of the dataset used here is stored in Big Query, you may need to set the ```secrets.toml```
+(2) Use instructions [here] (https://github.com/advanced-computing/course-materials/blob/main/docs/project.md)
+
+## 3. Run the streamlit app locally
+(1) Now you can run the whole app locally by writing ``` streamlit run streamlit_app.py``` in command line
