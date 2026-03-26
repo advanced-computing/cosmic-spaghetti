@@ -1,5 +1,6 @@
 from datetime import datetime
-
+from google.cloud import bigquery
+from google.oauth2 import service_account
 import pandas as pd
 import plotly.express as px
 import requests
@@ -8,50 +9,12 @@ import streamlit as st
 st.set_page_config(page_title="NYC Evictions", layout="wide")
 st.title("NYC Evictions Dashboard")
 
-url = "https://data.cityofnewyork.us/resource/6z8x-wfk4.json"
-limit = 5000
-
 date_col = "executed_date"
 borough_col = "borough"
 building_col = "residential_commercial_ind"
 
 start_date = "2025-01-01T00:00:00"
 end_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-
-# --- Optimized data loader ---
-@st.cache_data(ttl=3600)
-def load_paginated_data(url: str) -> pd.DataFrame:
-    all_records = []
-    offset = 0
-    session = requests.Session()  # persistent session
-
-    select_cols = f"{date_col},{borough_col},{building_col}"
-    where = f"{date_col} >= '{start_date}' AND {date_col} <= '{end_date}'"
-
-    # Progress bar
-    progress_bar = st.progress(0)
-
-    while True:
-        params = {"$limit": limit, "$offset": offset, "$where": where, "$select": select_cols}
-        r = session.get(url, params=params)
-        r.raise_for_status()
-        chunk = r.json()
-        if not chunk:
-            break
-        all_records.extend(chunk)
-        offset += limit
-        # Update progress bar visually (approximate)
-        progress_bar.progress(min(offset / 50000, 1.0))  # assume ~50k rows max
-
-    progress_bar.progress(1.0)
-    df = pd.json_normalize(all_records)
-
-    # Convert date
-    df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-    df = df.dropna(subset=[date_col])
-    df["year"] = df[date_col].dt.year
-    return df
 
 
 # --- Cache GeoJSON ---
@@ -62,9 +25,35 @@ def get_geojson():
     return response.json()
 
 
+@st.cache_data(ttl=3600)
+def load_data_from_bq():
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"]
+    )
+
+    client = bigquery.Client(
+        credentials=credentials,
+        project=credentials.project_id,
+    )
+
+    query = """
+    SELECT executed_date, borough, residential_commercial_ind
+    FROM `sipa-adv-c-cosmic-spaghetti.cosmic_spaghetti.evictions`
+    WHERE executed_date >= '2025-01-01'
+    """
+
+    df = client.query(query).to_dataframe()
+
+    df["executed_date"] = pd.to_datetime(df["executed_date"], errors="coerce")
+    df = df.dropna(subset=["executed_date"])
+    df["year"] = df["executed_date"].dt.year
+
+    return df
+
+
 # --- Load data ---
-with st.spinner("Loading eviction data (pagination + 2025→today filter)..."):
-    df_evic = load_paginated_data(url)
+with st.spinner("Loading eviction data from BigQuery..."):
+    df_evic = load_data_from_bq()
 
 st.success(f"Loaded {len(df_evic):,} rows (2025 → today)")
 st.dataframe(df_evic.head(5), use_container_width=True)
