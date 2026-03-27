@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 import pandas as pd
@@ -229,3 +230,12 @@ fig_ts = px.line(
     title="Evictions by Borough Over Time",
 )
 st.plotly_chart(fig_ts, use_container_width=True)
+
+# add page load time
+
+start_time = time.time()
+
+# --- your page code here ---
+
+elapsed = time.time() - start_time
+st.caption(f"Page loaded in {elapsed:.2f} seconds")
