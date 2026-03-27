@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 
 st.set_page_config(page_title="Proposal")
@@ -122,3 +124,12 @@ with st.container(border=True):
   overwhelming users.
 - Understanding the difference of loading streamlit in local computer and web.
 """)
+
+# add page load time
+
+start_time = time.time()
+
+# --- your page code here ---
+
+elapsed = time.time() - start_time
+st.caption(f"Page loaded in {elapsed:.2f} seconds")
