@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import time
+from datetime import datetime, timedelta
+
 import pandas as pd
 import plotly.express as px
 import requests
 import streamlit as st
+from google.cloud import bigquery
+from google.oauth2 import service_account
 
 # temporary fix
 import functions.permit_page as _pp  # noqa: F401
@@ -11,7 +16,6 @@ from functions.permit_page import (
     apply_filter,
     filter_last_12_months,
     first_column,
-    load_paginated,
     permit_timeseries_by_borough,
 )
 
@@ -19,29 +23,11 @@ st.set_page_config(page_title="NYC Building Job", layout="wide")
 st.write("permit_page location:", _pp.__file__)
 st.title("NYC Building Job (Last 12 Months)")
 
-URL = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
+project_id = "sipa-adv-c-cosmic-spaghetti"
+dataset = "cosmic_spaghetti"
+table = "permits"
 
-DESIRED_COLUMNS = [
-    "borough",
-    "issued_date",
-    "approved_date",
-    "expired_date",
-    "work_type",
-    "permit_status",
-    "community_board",
-]
-
-
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_permits():
-    return load_paginated(
-        URL,
-        desired_columns=DESIRED_COLUMNS,
-        limit=50_000,
-        max_rows=250_000,
-        order_by="issued_date",
-        date_col="issued_date",
-    )
+start_time = time.time()
 
 
 # load geojson
@@ -52,11 +38,39 @@ def get_geojson():
     return response.json()
 
 
-with st.spinner("Loading permits..."):
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_permits():
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"]
+    )
+
+    client = bigquery.Client(
+        credentials=credentials,
+        project=credentials.project_id,
+    )
+
+    one_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+
+    query = f"""SELECT borough,
+        issued_date,
+        work_type,
+        permit_status,
+        community_board
+    FROM `{project_id}.{dataset}.{table}`
+    WHERE issued_date >= '{one_year_ago}'"""
+
+    df = client.query(query).to_dataframe()
+    df["issued_date"] = pd.to_datetime(df["issued_date"], errors="coerce")
+    df = df.dropna(subset=["issued_date"])
+    df["year"] = df["issued_date"].dt.year
+    return df
+
+
+with st.spinner("Loading permits from BigQuery..."):
     df = get_permits()
 
 if df.empty:
-    st.error("No rows returned from API")
+    st.error("No rows returned from BigQuery")
     st.stop()
 
 # finding columns for 12 months filter
@@ -265,3 +279,13 @@ else:
         title="Approved and Issued Building Job Permits by Borough Over Time",
     )
     st.plotly_chart(fig, use_container_width=True)
+
+
+# add page load time
+
+start_time = time.time()
+
+# --- your page code here ---
+
+elapsed = time.time() - start_time
+st.caption(f"Page loaded in {elapsed:.2f} seconds")
