@@ -1,26 +1,40 @@
 import time
+from contextlib import contextmanager
 
 import streamlit as st
 
 st.set_page_config(page_title="Proposal")
 
 
-st.title("Project Proposal: NYC Building Insights: Unraveling the Web of NYC Building Data")
+# add page load time
+@contextmanager
+def display_load_time():
+    start_time = time.time()
 
-# Original Proposal
-st.subheader("Project Overview")
+    try:
+        yield
+    finally:
+        elapsed = time.time() - start_time
+        st.caption(f"Page loaded in {elapsed:.2f} seconds")
 
-st.write("""
+
+with display_load_time():
+    st.title("Project Proposal: NYC Building Insights: Unraveling the Web of NYC Building Data")
+
+    # Original Proposal
+    st.subheader("Project Overview")
+
+    st.write("""
 We are planning to explore several NYC open datasets to better understand the relationship
 between construction activity, housing conditions, and socioeconomic factors across New York City.
 """)
-st.divider()
+    st.divider()
 
-# Main datasets
-with st.container(border=True):
-    st.subheader("Main Datasets")
+    # Main datasets
+    with st.container(border=True):
+        st.subheader("Main Datasets")
 
-    st.markdown("""
+        st.markdown("""
 **1. DOB-Now Job Permit**
 Records historical job permit in NYC such as work type (new building, demolition, etc.).
 Provides insights about construction patterns across NYC.
@@ -36,13 +50,13 @@ Median household income aggregated at the county (borough) level from the U.S. C
 American Community Survey. Updated annually or every five years.
 """)
 
-st.write("")
+    st.write("")
 
-# Additional / Potential Datasets Box
-with st.container(border=True):
-    st.subheader("Additional datasets being considered")
+    # Additional / Potential Datasets Box
+    with st.container(border=True):
+        st.subheader("Additional datasets being considered")
 
-    st.markdown("""
+        st.markdown("""
 **1. DOB Violations**
 Records violations recorded by the DOB including violation type, severity, location, and status.
 Reflects compliance issues related to building safety, zoning, and construction regulations.
@@ -59,16 +73,16 @@ for violations or misconduct. Includes action types, outcomes, and associated ca
 [Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Disciplinary-Actions/ndq3-kuef/about_data)
 """)
 
-st.divider()
+    st.divider()
 
-# Research Questions
-with st.container(border=True):
-    st.subheader("Research Questions")
-    st.write("""Following the feedback on our initial proposal, we are planning to combine
+    # Research Questions
+    with st.container(border=True):
+        st.subheader("Research Questions")
+        st.write("""Following the feedback on our initial proposal, we are planning to combine
              different datasets to better understand relationships between construction activity,
              housing conditions, and eviction trends across New York City.
 """)
-    st.markdown("""
+        st.markdown("""
 **1. How does construction activity relate to eviction patterns across NYC boroughs?**
 We are interested in exploring whether areas with higher levels of construction activity
 (such as new building permits or major renovations) also experience higher eviction rates.
@@ -84,13 +98,13 @@ We are also interested in exploring whether boroughs with lower median household
 experience higher rates of complaints, violations, or evictions.
 """)
 
-st.write("")
+    st.write("")
 
-# Target Visualization
-with st.container(border=True):
-    st.subheader("Target Visualizations")
+    # Target Visualization
+    with st.container(border=True):
+        st.subheader("Target Visualizations")
 
-    st.markdown("""
+        st.markdown("""
 Our main visualization will be an **interactive map of New York City** displaying housing
 and building-related data by borough or neighborhood. Users will be able to explore patterns
 in construction activity, evictions, and housing violations geographically.
@@ -102,13 +116,13 @@ Additional visualizations may include:
   and income levels.
 """)
 
-st.write("")
+    st.write("")
 
-# Known Unknowns + Challenges
-with st.container(border=True):
-    st.subheader("Known Unknowns and Anticipated Challenges")
+    # Known Unknowns + Challenges
+    with st.container(border=True):
+        st.subheader("Known Unknowns and Anticipated Challenges")
 
-    st.markdown("""
+        st.markdown("""
 **Known Unknowns**
 
 - Differences in geographic granularity across datasets (borough vs ZIP vs address level).
@@ -124,12 +138,3 @@ with st.container(border=True):
   overwhelming users.
 - Understanding the difference of loading streamlit in local computer and web.
 """)
-
-# add page load time
-
-start_time = time.time()
-
-# --- your page code here ---
-
-elapsed = time.time() - start_time
-st.caption(f"Page loaded in {elapsed:.2f} seconds")
