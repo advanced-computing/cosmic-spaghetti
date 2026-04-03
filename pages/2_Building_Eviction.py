@@ -1,13 +1,11 @@
 import time
 from contextlib import contextmanager
-from datetime import datetime
 
 import pandas as pd
 import pandas_gbq
 import plotly.express as px
 import requests
 import streamlit as st
-from google.cloud import bigquery
 from google.oauth2 import service_account
 
 st.set_page_config(page_title="NYC Evictions", layout="wide")
@@ -49,15 +47,15 @@ def load_data_from_bq():
         scopes=["https://www.googleapis.com/auth/bigquery"],
     )
 
-    client = bigquery.Client(
-        credentials=credentials,
-        project=credentials.project_id,
-    )
+    # client = bigquery.Client(
+    #     credentials=credentials,
+    #     project=credentials.project_id,
+    # )
 
     query = """
-    SELECT 
-    executed_date, 
-    borough, 
+    SELECT
+    executed_date,
+    borough,
     residential_commercial_ind
     FROM `sipa-adv-c-cosmic-spaghetti.cosmic_spaghetti.evictions`
     WHERE executed_date >= '2025-01-01'

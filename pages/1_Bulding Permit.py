@@ -58,8 +58,7 @@ def get_permits():
 
     # sql filter
     query = f"""
-    SELECT 
-        borough,
+    SELECT borough,
         issued_date,
         work_type,
         permit_status,
