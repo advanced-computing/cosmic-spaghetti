@@ -50,7 +50,7 @@ def fetch_evic() -> pd.DataFrame:
 def upload_to_bq(df_evic: pd.DataFrame) -> None:
     """Upload df to BigQuery using the `TRUNCATE` technique.
     use `if_exists = "replace"`
-    Method: drop existinf table, recreates it and insets current data"""
+    Method: drop existing table, recreates it and insets current data"""
     pandas_gbq.to_gbq(
         df_evic,
         table_id,

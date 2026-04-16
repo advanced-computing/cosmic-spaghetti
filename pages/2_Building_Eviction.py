@@ -28,10 +28,6 @@ def display_load_time():
         st.caption(f"Page loaded in {elapsed:.2f} seconds")
 
 
-# start_date = "2025-01-01T00:00:00"
-# end_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-
 # --- Cache GeoJSON ---
 @st.cache_data(ttl=86400)
 def get_geojson():
@@ -46,11 +42,6 @@ def load_data_from_bq():
         st.secrets["gcp_service_account"],
         scopes=["https://www.googleapis.com/auth/bigquery"],
     )
-
-    # client = bigquery.Client(
-    #     credentials=credentials,
-    #     project=credentials.project_id,
-    # )
 
     query = """
     SELECT

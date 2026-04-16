@@ -64,7 +64,7 @@ def get_permits():
         permit_status,
         community_board
     FROM `{project_id}.{dataset}.{table}`
-    WHERE issued_date >= '{one_year_ago}'
+    WHERE DATE(issued_date) >= '{one_year_ago}'
     AND borough IS NOT NULL
     AND issued_date IS NOT NULL
     LIMIT 10000"""
