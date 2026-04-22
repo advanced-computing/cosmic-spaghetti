@@ -62,14 +62,105 @@ Policy knowledge regarding the eviction and housing in general
 (2) Pages are built by utilizing ```functions``` in ```functions``` page
 (3) Data validation and testing can be found in ```tests``` folder
 
-# Instruction
+## What this app does
 
-## 1. Installation
-(1) Make sure you install all package by writing ``` pip install -r requirements.txt``` in command line
+An interactive dashboard exploring NYC building permits and evictions data across the five boroughs. Users can filter by borough, building type, and time period to explore trends and patterns.
 
-## 2. Setting ```sectrets.toml```
+# Setup Instruction
+
+## 1. Clone the repo
+``` bash
+git clone https://github.com/advanced-computing/cosmic-spaghetti.git
+cd cosmic-spaghetti 
+```
+
+
+## 2. Create and activate a virtual envirinment
+```bash
+python -m venv venv
+source venv/bin/activate        #Mac/Linux
+venv\Scripts\activate           #Windows
+```
+
+## 3. Installation
+Make sure you install all package by writing 
+``` bash
+pip install -r requirements.txt
+``` 
+
+## 4. Set up secrets
 (1) One of the dataset used here is stored in Big Query, you may need to set the ```secrets.toml```
 (2) Use instructions [here] (https://github.com/advanced-computing/course-materials/blob/main/docs/project.md)
 
 ## 3. Run the streamlit app locally
 (1) Now you can run the whole app locally by writing ``` streamlit run streamlit_app.py``` in command line
+
+# Loading Data (team members only)
+To refresh the BigQuery tables, you need to authenticate with Google Cloud first:
+
+```bash
+gcloud auth application-default login
+```
+
+Then run the loading scripts:
+
+```bash
+python load_evic_to_bq.py       
+python load_permit_to_bq.py     
+```
+
+Data is also refreshed automatically every day at 6am UTC via GitHub Actions.
+
+---
+
+# Data Model
+Data is pulled from two NYC Open Data APIs and stored in Big Query under `sipa-adv-c-cosmic-spaghetti.cosmic_spaghetti`:
+
+| Table | Source | Method | Frequency |
+|---|---|---|---|
+| `evictions` | NYC Open Data (`6z8x-wfk4`) | Truncate (full refresh) | Daily |
+| `permits` | NYC Open Data (`rbx6-tga4`) | Truncate (last 1 year) | Daily |
+
+**Why Truncate for both?**
+- Eviction records get corrected over time — a full refresh ensures accuracy
+- Permits are filtered to the last 1 year so the dataset stays manageable
+- No reliable unique key is available without BigQuery billing (DML not allowed on free tier)
+
+The Streamlit app reads from BigQuery using a service account key stored in:
+- `secrets.toml` locally
+- Streamlit Cloud secrets for the deployed app
+
+---
+
+# Performance
+Bothe pages load under 2 seconds on subsequent loads using 
+`@st.cache_data(ttl=3600)`.
+first load takes ~2-3 seconds due to Big Query  cold start latency.
+
+Optimizations made:
+- Switched all data reads from the NYC Open Data API to BigQueary 
+- Switched all data reads from the NYC Open Data API to BigQuery
+- Used `pandas_gbq.read_gbq()` with explicit `dtypes` to speed up type inference
+- Added `progress_bar_type=None` to remove tqdm overhead
+- Filtered data in SQL (`WHERE`, `IS NOT NULL`, `LIMIT 10000`) rather than in Python
+- Used `@st.cache_data` so subsequent page loads are near-instant
+
+---
+
+## Changes based on usability testing (Lecture 10)
+
+During usability testing, participants found the following issues:
+
+- **Missing setup instructions** — the README had no step-by-step guide for running locally
+- **No mention of `secrets.toml`** — participants didn't know they needed to create this file
+- **No mention of `gcloud` authentication** — the data loading scripts failed without it
+- **Service account key not explained** — participants didn't know where to get the key
+
+All of the above have been addressed in this README update.
+
+---
+
+## Running tests
+```bash
+pytest
+```
