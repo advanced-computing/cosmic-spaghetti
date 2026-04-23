@@ -1,6 +1,4 @@
 # import libraries
-from datetime import datetime, timedelta
-
 import google.auth
 import pandas as pd
 import pandas_gbq
@@ -10,9 +8,47 @@ import requests
 project_id = "sipa-adv-c-cosmic-spaghetti"
 table_id = "cosmic_spaghetti.permits"
 
-url = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
+# Dataset 1 — DOB NOW approved permits (newer filings, work permits: GC, PL, ME)
+URL_NOW = "https://data.cityofnewyork.us/resource/rbx6-tga4.json"
+
+# Dataset 2 — DOB Permit Issuance (older system, job types: NB, DM, A1, A2, A3)
+# Also has LATITUDE / LONGITUDE
+URL_ISSUANCE = "https://data.cityofnewyork.us/resource/ipu4-2q9a.json"
+
 limit = 50000
-select_cols = "borough,issued_date,work_type,permit_status,community_board"
+
+# Filter: starting January 2025
+START_DATE = "2025-01-01T00:00:00"
+
+# borough code to name mapping for ipu4-2q9a
+BOROUGH_MAP = {
+    "1": "MANHATTAN",
+    "2": "BRONX",
+    "3": "BROOKLYN",
+    "4": "QUEENS",
+    "5": "STATEN ISLAND",
+}
+
+# permit type descriptions
+JOB_TYPE_MAP = {
+    "NB": "New Building",
+    "DM": "Demolition",
+    "A1": "Alteration Type 1",
+    "A2": "Alteration Type 2",
+    "A3": "Alteration Type 3",
+    "GC": "General Construction",
+    "PL": "Plumbing",
+    "ME": "Mechanical/Electrical",
+    "SG": "Sign",
+    "EQ": "Equipment",
+    "BL": "Boiler",
+    "EW": "Earthwork",
+    "FA": "Fire Alarm",
+    "FB": "Fuel Burning",
+    "FP": "Fire Suppression",
+    "FS": "Fuel Storage",
+    "OT": "Other",
+}
 
 # local authentication
 credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/bigquery"])
@@ -20,24 +56,15 @@ pandas_gbq.context.credentials = credentials
 pandas_gbq.context.project = project_id
 
 
-def fetch_permits() -> pd.DataFrame:
-    """Pull permits from last 1 year from NYC Open Data API with pagination."""
+def fetch_paginated(url: str, params: dict) -> list:
+    """Generic paginated fetch from NYC Open Data API."""
     all_records = []
     offset = 0
     session = requests.Session()
 
-    # filter to last 1 year
-    one_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%S")
-    today = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
     while True:
-        params = {
-            "$limit": limit,
-            "$offset": offset,
-            "$select": select_cols,
-            "$order": "issued_date DESC",
-            "$where": f"issued_date >= '{one_year_ago}' AND issued_date <= '{today}'",
-        }
+        params["$limit"] = limit
+        params["$offset"] = offset
         response = session.get(url, params=params)
         response.raise_for_status()
         chunk = response.json()
@@ -50,34 +77,122 @@ def fetch_permits() -> pd.DataFrame:
         if len(chunk) < limit:
             break
 
-    df_permits = pd.DataFrame(all_records)
-    df_permits["issued_date"] = pd.to_datetime(df_permits["issued_date"], errors="coerce")
-    return df_permits
+    return all_records
 
 
-def upload_to_bq(df_permits: pd.DataFrame) -> None:
-    """Method: TRUNCATE (replace)
-    Permits data is filtered to last 1 year from the API.
-    Full refresh ensures BigQuery always reflects the latest data.
-    if_exists='replace' drops and recreates the table on each run.
-    Chosen over incremental because:
-    - Dataset is already filtered to 1 year so size is manageable
-    - Permit records can be updated/corrected over time
-    - No reliable unique key available without billing (no DML allowed)
-    """
+def fetch_now_permits() -> pd.DataFrame:
+    """Fetch DOB NOW approved permits (rbx6-tga4).
+    Work permits: GC, PL, ME, SG etc.
+    Starting January 2025."""
+    print("\nFetching DOB NOW permits (rbx6-tga4) from Jan 2025...")
+    params = {
+        "$select": "borough,issued_date,work_type,permit_status,community_board",
+        "$order": "issued_date DESC",
+        "$where": f"issued_date >= '{START_DATE}'",
+    }
+    records = fetch_paginated(URL_NOW, params)
+    df = pd.DataFrame(records)
+    if df.empty:
+        return pd.DataFrame()
+
+    df = df.rename(
+        columns={
+            "issued_date": "permit_date",
+            "work_type": "permit_type",
+            "permit_status": "status",
+        }
+    )
+    df["latitude"] = None
+    df["longitude"] = None
+    df["source"] = "DOB_NOW"
+    return df
+
+
+def fetch_issuance_permits() -> pd.DataFrame:
+    """Fetch DOB Permit Issuance (ipu4-2q9a).
+    Job types: NB, DM, A1, A2, A3.
+    Has LATITUDE / LONGITUDE.
+    Starting January 2025."""
+    print("\nFetching DOB Permit Issuance (ipu4-2q9a) from Jan 2025...")
+    params = {
+        "$where": f"issuance_date >= '{START_DATE}'",
+    }
+    records = fetch_paginated(URL_ISSUANCE, params)
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return pd.DataFrame()
+
+    # keep only columns we need if they exist
+    keep = [
+        "borough_",
+        "issuance_date",
+        "job_type",
+        "status",
+        "community_board",
+        "latitude",
+        "longitude",
+    ]
+    df = df[[c for c in keep if c in df.columns]].copy()
+
+    # rename columns
+    df = df.rename(
+        columns={
+            "borough_": "borough",
+            "issuance_date": "permit_date",
+            "job_type": "permit_type",
+            "latitude": "latitude",
+            "longitude": "longitude",
+        }
+    )
+
+    # convert borough code (1-5) to name
+    df["borough"] = df["borough"].str.strip().map(BOROUGH_MAP).fillna(df["borough"])
+    df["source"] = "DOB_ISSUANCE"
+    return df
+
+
+def upload_to_bq(df: pd.DataFrame) -> None:
+    """Technique: TRUNCATE (replace)
+    Combined permits from DOB NOW and DOB Permit Issuance.
+    Starting from January 2025.
+    Full refresh on each run."""
     pandas_gbq.to_gbq(
-        df_permits,
+        df,
         table_id,
         project_id=project_id,
         if_exists="replace",
     )
-    print(f" Uploaded {len(df_permits):,} rows to {table_id}")
+    print(f"\n Uploaded {len(df):,} rows to {table_id}")
 
 
 # Main
 if __name__ == "__main__":
-    print("Fetching permits data from NYC Open Data (last 1 year)...")
-    df_permits = fetch_permits()
-    print(f"Total rows fetched: {len(df_permits):,}")
-    upload_to_bq(df_permits)
+    # fetch both datasets
+    df_now = fetch_now_permits()
+    df_issuance = fetch_issuance_permits()
+
+    # combine
+    df_combined = pd.concat([df_now, df_issuance], ignore_index=True)
+
+    # standardize
+    df_combined["permit_date"] = pd.to_datetime(df_combined["permit_date"], errors="coerce")
+    df_combined["borough"] = df_combined["borough"].str.strip().str.upper()
+    df_combined["permit_type"] = df_combined["permit_type"].str.strip().str.upper()
+    df_combined["latitude"] = pd.to_numeric(df_combined["latitude"], errors="coerce")
+    df_combined["longitude"] = pd.to_numeric(df_combined["longitude"], errors="coerce")
+
+    # add human readable description
+    df_combined["permit_type_desc"] = (
+        df_combined["permit_type"].map(JOB_TYPE_MAP).fillna(df_combined["permit_type"])
+    )
+
+    print(f"\nTotal rows combined: {len(df_combined):,}")
+    print(f"  DOB NOW rows:       {len(df_now):,}")
+    print(f"  DOB Issuance rows:  {len(df_issuance):,}")
+    print(f"\nPermit types breakdown:")
+    print(df_combined["permit_type"].value_counts().to_string())
+    print(f"\nRows with lat/lon: {df_combined['latitude'].notna().sum():,}")
+
+    upload_to_bq(df_combined)
     print("Done! Check BigQuery console to verify the table.")
