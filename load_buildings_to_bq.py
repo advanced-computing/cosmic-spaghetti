@@ -35,7 +35,7 @@ def fetch_buildings() -> list:
     session = requests.Session()
 
     # use CSV endpoint instead of JSON — works on geospatial datasets
-    CSV_URL = "https://data.cityofnewyork.us/resource/5zhs-2jue.csv"
+    csv_url = "https://data.cityofnewyork.us/resource/5zhs-2jue.csv"
 
     print("Fetching NYC building footprints (CSV endpoint)...")
     while True:
@@ -43,7 +43,7 @@ def fetch_buildings() -> list:
             "$limit": limit,
             "$offset": offset,
         }
-        response = session.get(CSV_URL, params=params)
+        response = session.get(csv_url, params=params)
         response.raise_for_status()
 
         df_chunk = pd.read_csv(io.StringIO(response.text))
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     print("\nStep 2: Aggregating...")
     df_summary = process_buildings(records)
 
-    print(f"\nBorough summary:")
+    print("\nBorough summary:")
     print(
         df_summary.groupby("borough")["total_buildings"]
         .sum()

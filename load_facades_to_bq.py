@@ -73,9 +73,9 @@ if __name__ == "__main__":
     df = fetch_facades()
     print(f"\nTotal filings fetched: {len(df):,}")
     if not df.empty:
-        print(f"\nFiling status breakdown:")
+        print("\nFiling status breakdown:")
         print(df["filing_status"].value_counts().to_string())
-        print(f"\nBorough breakdown:")
+        print("\nBorough breakdown:")
         print(df["borough"].value_counts().to_string())
     upload_to_bq(df)
     print("Done! Check BigQuery console to verify the table.")

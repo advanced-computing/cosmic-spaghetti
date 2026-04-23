@@ -190,7 +190,7 @@ if __name__ == "__main__":
     print(f"\nTotal rows combined: {len(df_combined):,}")
     print(f"  DOB NOW rows:       {len(df_now):,}")
     print(f"  DOB Issuance rows:  {len(df_issuance):,}")
-    print(f"\nPermit types breakdown:")
+    print("\nPermit types breakdown:")
     print(df_combined["permit_type"].value_counts().to_string())
     print(f"\nRows with lat/lon: {df_combined['latitude'].notna().sum():,}")
 

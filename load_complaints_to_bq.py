@@ -1,5 +1,4 @@
 # import libraries
-from datetime import datetime, timedelta
 
 import google.auth
 import pandas as pd
@@ -42,7 +41,8 @@ def fetch_complaints() -> pd.DataFrame:
         print(f"  Fetched {offset} rows so far...")
 
         # stop after 200k rows to keep it manageable
-        if offset >= 200000:
+        max_rows = 200000
+        if offset >= max_rows:
             print("  Reached 200k rows limit — stopping.")
             break
 
