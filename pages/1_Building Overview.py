@@ -219,9 +219,14 @@ with tab1:
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
+    min_construct_yr = 1900
+    max_construct_yr = 2025
     st.subheader("Buildings Constructed Per Year")
     df_yr = (
-        df_summary[(df_summary["cnstrct_yr"] >= 1900) & (df_summary["cnstrct_yr"] <= 2025)]
+        df_summary[
+            (df_summary["cnstrct_yr"] >= min_construct_yr)
+            & (df_summary["cnstrct_yr"] <= max_construct_yr)
+        ]
         .groupby(["cnstrct_yr", "borough"])["total_buildings"]
         .sum()
         .reset_index()

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
-from datetime import datetime, timedelta
 
 import pandas as pd
 import pandas_gbq
