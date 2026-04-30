@@ -1,33 +1,42 @@
 name: Update Big Query
 
 on:
-    schedule:
-        - cron: '0 6 * * *' # Runs every day at 6:00 AM UTC
-    workflow_dispatch: # Allows manual triggering of the workflow
+  schedule:
+    - cron: '0 6 * * *'  # Runs every day at 6:00 AM UTC
+  workflow_dispatch:       # Allows manual triggering
 
 jobs:
-    update:
-        runs-on: ubuntu-latest
+  update:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            - name: Set up Python
-              uses: actions/setup-python@v4
-              with:
-                python-version: '3.13'
-            
-            - name: Install dependencies
-              run: pip install -r requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
 
-            - name: Authenticate to Google Cloud
-              uses: google-github-actions/auth@v1
-              with:
-                credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-            - name: Run eviction loader
-              run: python load_evic_to_bq.py
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-            - name: Run permit loader
-              run: python load_permit_to_bq.py
+      - name: Run evictions loader
+        run: python load_evic_to_bq.py
+
+      - name: Run permits loader
+        run: python load_permit_to_bq.py
+
+      - name: Run complaints loader
+        run: python load_complaints_to_bq.py
+
+      - name: Run facades loader
+        run: python load_facades_to_bq.py
+
+      - name: Run buildings loader
+        run: python load_buildings_to_bq.py

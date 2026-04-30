@@ -23,12 +23,12 @@ st.title("NYC Buildings Overview")
 
 start_time = time.time()
 
-# ── Configuration ─────────────────────────────────────────────────────────────
 PROJECT_ID = "sipa-adv-c-cosmic-spaghetti"
 DATASET = "cosmic_spaghetti"
+MIN_CONSTRUCTION_YEAR = 1900
+MAX_CONSTRUCTION_YEAR = 2025
 
 
-# ── GeoJSON ───────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=86400, show_spinner=False)
 def get_geojson():
     response = requests.get(
@@ -44,13 +44,12 @@ def get_credentials():
     )
 
 
-# ── Data loaders ──────────────────────────────────────────────────────────────
 @st.cache_data(ttl=86400, show_spinner=False)
 def load_buildings_summary() -> pd.DataFrame:
     query = f"""
     SELECT borough, cnstrct_yr, total_buildings, avg_height
     FROM `{PROJECT_ID}.{DATASET}.buildings_summary`
-    WHERE borough IS NOT NULL AND cnstrct_yr <= 2025
+    WHERE borough IS NOT NULL AND cnstrct_yr <= {MAX_CONSTRUCTION_YEAR}
     """
     return pandas_gbq.read_gbq(
         query,
@@ -65,11 +64,11 @@ def load_buildings_summary() -> pd.DataFrame:
 def load_new_buildings() -> pd.DataFrame:
     query = f"""
     SELECT borough, permit_date, permit_type, permit_type_desc,
-           status, latitude, longitude
+        status, latitude, longitude
     FROM `{PROJECT_ID}.{DATASET}.permits`
     WHERE permit_type = 'NB'
-    AND permit_date >= '2025-01-01'
     AND borough IS NOT NULL
+    AND permit_date IS NOT NULL
     """
     df = pandas_gbq.read_gbq(
         query,
@@ -151,7 +150,7 @@ col1.metric(
     border=True,
 )
 col2.metric(
-    label="New Building Jobs (Jan 2025+)",
+    label="New Building Jobs (2008–2020)",
     value=f"{len(df_new):,}",
     border=True,
 )
@@ -168,7 +167,6 @@ col4.metric(
 
 st.divider()
 
-# ── Tabs ──────────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs(
     [
         "🏙️ Total Buildings",
@@ -180,7 +178,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 1 — TOTAL BUILDINGS IN NYC (end of 2025)
+# TAB 1 — TOTAL BUILDINGS IN NYC
 # ══════════════════════════════════════════════════════════════════════════════
 with tab1:
     st.subheader("Total Buildings in NYC (end of 2025)")
@@ -219,13 +217,11 @@ with tab1:
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    min_construct_yr = 1900
-    max_construct_yr = 2025
     st.subheader("Buildings Constructed Per Year")
     df_yr = (
         df_summary[
-            (df_summary["cnstrct_yr"] >= min_construct_yr)
-            & (df_summary["cnstrct_yr"] <= max_construct_yr)
+            (df_summary["cnstrct_yr"] >= MIN_CONSTRUCTION_YEAR)
+            & (df_summary["cnstrct_yr"] <= MAX_CONSTRUCTION_YEAR)
         ]
         .groupby(["cnstrct_yr", "borough"])["total_buildings"]
         .sum()
@@ -244,14 +240,17 @@ with tab1:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 2 — NEW BUILDING JOBS (Jan 2025+)
+# TAB 2 — NEW BUILDING JOBS (2008–2020)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab2:
-    st.subheader("New Building Jobs (January 2025 onwards)")
-    st.caption("Source: DOB Permit Issuance (ipu4-2q9a) — job_type = NB")
+    st.subheader("New Building Jobs (2008–2020)")
+    st.caption(
+        "Source: DOB Permit Issuance (ipu4-2q9a) — job_type = NB. "
+        "Data available 2008–2020. New buildings after 2020 are not yet in any public dataset."
+    )
 
     if df_new.empty:
-        st.info("No new building permits found from January 2025.")
+        st.info("No new building permits found.")
     else:
         new_by_boro = (
             df_new["borough"]
@@ -307,36 +306,33 @@ with tab2:
             fig_scatter.update_layout(margin={"r": 0, "t": 40, "l": 0, "b": 0})
             st.plotly_chart(fig_scatter, use_container_width=True)
 
-        df_new_monthly = (
-            df_new.groupby(df_new["permit_date"].dt.to_period("M")).size().reset_index(name="Count")
-        )
-        df_new_monthly["permit_date"] = df_new_monthly["permit_date"].dt.to_timestamp()
-        fig_trend = px.bar(
-            df_new_monthly,
-            x="permit_date",
-            y="Count",
-            title="New Building Permits Per Month (Jan 2025+)",
-            labels={"permit_date": "Month"},
-            color_discrete_sequence=["#1D9E75"],
-        )
-        st.plotly_chart(fig_trend, use_container_width=True)
+        df_new_yr = df_new.dropna(subset=["permit_date"]).copy()
+        if not df_new_yr.empty:
+            df_new_yr["Year"] = df_new_yr["permit_date"].dt.year
+            yearly = df_new_yr.groupby("Year").size().reset_index(name="Count")
+            fig_trend = px.bar(
+                yearly,
+                x="Year",
+                y="Count",
+                title="New Building Permits Per Year (2008–2020)",
+                color_discrete_sequence=["#1D9E75"],
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 3 — OTHER BUILDING JOBS
-# Overview: Jan 2025+ | Detail: last 12 months (from 1_Bulding_Permit.py)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab3:
     st.subheader("Other Building Jobs")
     st.caption(
-        "Source: DOB NOW (rbx6-tga4) + DOB Permit Issuance (ipu4-2q9a) — "
-        "all permit types except New Building"
+        "Source: DOB NOW (rbx6-tga4) — all work permit types except New Building. "
+        "Filtered to January 2025 onwards."
     )
 
     if df_other.empty:
         st.info("No other permits found.")
     else:
-        # overview Jan 2025+
         st.markdown("#### Overview (January 2025 onwards)")
 
         other_by_boro_2025 = (
@@ -405,8 +401,6 @@ with tab3:
             st.plotly_chart(fig_other_scatter, use_container_width=True)
 
         st.divider()
-
-        # detail last 12 months
         st.markdown("#### Detailed View (Last 12 Months)")
         st.success(f"Loaded {len(df_other):,} rows (last 12 months)")
 
@@ -416,7 +410,6 @@ with tab3:
             df_other, ["permit_type_desc", "permit_type", "work_type", "job_type"]
         )
         status_col = first_column(df_other, ["status", "permit_status"])
-
         df_detail = filter_last_12_months(df_other, date_col=date_col)
 
         with st.expander("Set Filters", expanded=False):
@@ -602,7 +595,7 @@ with tab4:
     st.subheader("Facade Inspection Safety Program (FISP)")
     st.caption(
         "Buildings taller than 6 stories must be inspected every 5 years. "
-        "Current cycle: Cycle 10 (2025–2030). "
+        "Current cycle: Cycle 10 (2025–2030). Data available: 2001–present. "
         "Classifications: Safe · SWARMP (needs repair within 5 years) · Unsafe."
     )
 
@@ -618,9 +611,9 @@ with tab4:
         col2.metric(label="SWARMP Filings", value=f"{swarmp_count:,}", border=True)
         col3.metric(label="Unsafe Filings", value=f"{unsafe_count:,}", border=True)
 
-        # pie chart
+        df_cycle9 = df_facades[df_facades["cycle"] == "9"]
         status_counts = (
-            df_facades["filing_status"]
+            df_cycle9["filing_status"]
             .fillna("UNKNOWN")
             .value_counts()
             .reset_index()
@@ -633,7 +626,7 @@ with tab4:
                 status_counts,
                 names="Status",
                 values="Count",
-                title="Facade Filing Status (All Cycles)",
+                title="Facade Filing Status (Cycle 9, Previous Cycle)",
                 color="Status",
                 color_discrete_map={
                     "SAFE": "#639922",
@@ -646,7 +639,7 @@ with tab4:
 
         with col2:
             unsafe_by_boro = (
-                df_facades[df_facades["filing_status"].str.contains("UNSAFE", na=False)]["borough"]
+                df_cycle9[df_cycle9["filing_status"].str.contains("UNSAFE", na=False)]["borough"]
                 .value_counts()
                 .reset_index()
                 .rename(columns={"borough": "Borough", "count": "Unsafe Filings"})
@@ -662,7 +655,6 @@ with tab4:
             )
             st.plotly_chart(fig_unsafe, use_container_width=True)
 
-        # at-risk map
         fisp_by_boro = (
             df_facades[df_facades["filing_status"].str.contains("UNSAFE|SWARMP", na=False)]
             .groupby("borough")["filing_status"]
@@ -689,7 +681,6 @@ with tab4:
         fig_fisp_map.update_layout(margin={"r": 0, "t": 40, "l": 0, "b": 0})
         st.plotly_chart(fig_fisp_map, use_container_width=True)
 
-        # trend by cycle
         if "cycle" in df_facades.columns:
             cycle_counts = (
                 df_facades.groupby(["cycle", "filing_status"]).size().reset_index(name="Count")
