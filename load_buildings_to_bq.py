@@ -9,7 +9,6 @@ import requests
 # configuration
 project_id = "sipa-adv-c-cosmic-spaghetti"
 table_summary = "cosmic_spaghetti.buildings_summary"
-table_density = "cosmic_spaghetti.buildings_density"
 
 url = "https://data.cityofnewyork.us/resource/5zhs-2jue.json"
 limit = 50000

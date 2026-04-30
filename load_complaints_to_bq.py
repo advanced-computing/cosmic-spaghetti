@@ -10,6 +10,7 @@ project_id = "sipa-adv-c-cosmic-spaghetti"
 table_id = "cosmic_spaghetti.complaints"
 url = "https://data.cityofnewyork.us/resource/eabe-havv.json"
 limit = 50000
+MAX_ROWS = 200_000
 
 # local authentication
 credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/bigquery"])
@@ -41,8 +42,7 @@ def fetch_complaints() -> pd.DataFrame:
         print(f"  Fetched {offset} rows so far...")
 
         # stop after 200k rows to keep it manageable
-        max_rows = 200000
-        if offset >= max_rows:
+        if offset >= MAX_ROWS:
             print("  Reached 200k rows limit — stopping.")
             break
 

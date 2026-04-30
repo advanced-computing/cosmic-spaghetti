@@ -17,8 +17,6 @@ URL_ISSUANCE = "https://data.cityofnewyork.us/resource/ipu4-2q9a.json"
 
 limit = 50000
 
-# Filter: starting January 2025
-START_DATE = "2025-01-01T00:00:00"
 
 # borough code to name mapping for ipu4-2q9a
 BOROUGH_MAP = {
@@ -49,6 +47,8 @@ JOB_TYPE_MAP = {
     "FS": "Fuel Storage",
     "OT": "Other",
 }
+
+START_DATE = "2025-01-01T00:00:00"
 
 # local authentication
 credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/bigquery"])
@@ -81,17 +81,13 @@ def fetch_paginated(url: str, params: dict) -> list:
 
 
 def fetch_now_permits() -> pd.DataFrame:
-    """Fetch DOB NOW approved permits (rbx6-tga4).
-    Work permits: GC, PL, ME, SG etc.
-    Starting January 2025."""
     print("\nFetching DOB NOW permits (rbx6-tga4) from Jan 2025...")
     params = {
-        "$select": "borough,issued_date,work_type,permit_status,community_board",
-        "$order": "issued_date DESC",
-        "$where": f"issued_date >= '{START_DATE}'",
+        "$where": f"issued_date >= '{START_DATE}'",  # use constant
     }
     records = fetch_paginated(URL_NOW, params)
     df = pd.DataFrame(records)
+
     if df.empty:
         return pd.DataFrame()
 
@@ -102,20 +98,16 @@ def fetch_now_permits() -> pd.DataFrame:
             "permit_status": "status",
         }
     )
-    df["latitude"] = None
-    df["longitude"] = None
+    df["latitude"] = pd.to_numeric(df.get("latitude"), errors="coerce")
+    df["longitude"] = pd.to_numeric(df.get("longitude"), errors="coerce")
     df["source"] = "DOB_NOW"
     return df
 
 
 def fetch_issuance_permits() -> pd.DataFrame:
-    """Fetch DOB Permit Issuance (ipu4-2q9a).
-    Job types: NB, DM, A1, A2, A3.
-    Has LATITUDE / LONGITUDE.
-    Starting January 2025."""
-    print("\nFetching DOB Permit Issuance (ipu4-2q9a) from Jan 2025...")
+    print("\nFetching DOB Permit Issuance (ipu4-2q9a) — NB jobs only...")
     params = {
-        "$where": f"issuance_date >= '{START_DATE}'",
+        "$where": "job_type = 'NB'",  # filter by job type only
     }
     records = fetch_paginated(URL_ISSUANCE, params)
     df = pd.DataFrame(records)
@@ -123,31 +115,27 @@ def fetch_issuance_permits() -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame()
 
-    # keep only columns we need if they exist
     keep = [
-        "borough_",
-        "issuance_date",
+        "borough",
         "job_type",
-        "status",
+        "permit_status",
         "community_board",
-        "latitude",
-        "longitude",
+        "gis_latitude",
+        "gis_longitude",
+        "filing_date",
     ]
     df = df[[c for c in keep if c in df.columns]].copy()
 
-    # rename columns
     df = df.rename(
         columns={
-            "borough_": "borough",
-            "issuance_date": "permit_date",
             "job_type": "permit_type",
-            "latitude": "latitude",
-            "longitude": "longitude",
+            "permit_status": "status",
+            "gis_latitude": "latitude",
+            "gis_longitude": "longitude",
+            "filing_date": "permit_date",
         }
     )
-
-    # convert borough code (1-5) to name
-    df["borough"] = df["borough"].str.strip().map(BOROUGH_MAP).fillna(df["borough"])
+    df["borough"] = df["borough"].str.strip().str.upper()
     df["source"] = "DOB_ISSUANCE"
     return df
 
@@ -176,7 +164,9 @@ if __name__ == "__main__":
     df_combined = pd.concat([df_now, df_issuance], ignore_index=True)
 
     # standardize
-    df_combined["permit_date"] = pd.to_datetime(df_combined["permit_date"], errors="coerce")
+    df_combined["permit_date"] = pd.to_datetime(
+        df_combined["permit_date"], format="mixed", errors="coerce"
+    )
     df_combined["borough"] = df_combined["borough"].str.strip().str.upper()
     df_combined["permit_type"] = df_combined["permit_type"].str.strip().str.upper()
     df_combined["latitude"] = pd.to_numeric(df_combined["latitude"], errors="coerce")
