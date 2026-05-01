@@ -77,7 +77,7 @@ def load_evictions() -> pd.DataFrame:
     df["month"] = df["executed_date"].dt.to_period("M").dt.to_timestamp()
 
     # normalize borough names — county names → borough names
-    BOROUGH_NAME_MAP = {
+    borough_name_map = {
         "Kings": "Brooklyn",
         "Richmond": "Staten Island",
         "New York": "Manhattan",
@@ -91,18 +91,18 @@ def load_evictions() -> pd.DataFrame:
         df["borough"]
         .str.strip()
         .str.title()
-        .map(BOROUGH_NAME_MAP)
+        .map(borough_name_map)
         .fillna(df["borough"].str.strip().str.title())  # noqa: E501
     )
 
     # normalize type — combine C/Commercial and R/Residential
-    TYPE_MAP = {
+    type_map = {
         "C": "Commercial",
         "R": "Residential",
         "Commercial": "Commercial",
         "Residential": "Residential",
     }
-    df["type"] = df[TYPE_COL].str.strip().str.title().map(TYPE_MAP).fillna("Unknown")
+    df["type"] = df[TYPE_COL].str.strip().str.title().map(type_map).fillna("Unknown")
     return df
 
 
@@ -219,7 +219,7 @@ with tab1:
         y="Evictions",
         color=BOROUGH_COL,
         markers=True,
-        title=f"Evictions by Borough : {bucket} Trend ({selected_year_range[0]}–{selected_year_range[1]})",
+        title=f"Evic by Boro: {bucket} Trend ({selected_year_range[0]}–{selected_year_range[1]})",
         color_discrete_sequence=COLOR_SEQUENCE,
         labels={BOROUGH_COL: "Borough"},
     )

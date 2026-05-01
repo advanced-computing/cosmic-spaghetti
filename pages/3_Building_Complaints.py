@@ -102,14 +102,14 @@ def load_complaints() -> pd.DataFrame:
     df = df.dropna(subset=["date_entered"])
 
     # extract borough from community_board first digit
-    BOROUGH_MAP = {
+    borough_map = {
         "1": "Manhattan",
         "2": "Bronx",
         "3": "Brooklyn",
         "4": "Queens",
         "5": "Staten Island",
     }
-    df["borough"] = df["community_board"].str[0].map(BOROUGH_MAP).fillna("Unknown")
+    df["borough"] = df["community_board"].str[0].map(borough_map).fillna("Unknown")
 
     # add readable category description
     df["complaint_desc"] = (
@@ -117,7 +117,7 @@ def load_complaints() -> pd.DataFrame:
     )
 
     # add priority from category map (A/B/C/D)
-    PRIORITY_MAP = {
+    priority_map = {
         "01": "A",
         "03": "A",
         "10": "A",
@@ -215,11 +215,11 @@ def load_complaints() -> pd.DataFrame:
         "4N": "D",
         "4P": "D",
     }
-    df["priority"] = df["complaint_category"].map(PRIORITY_MAP).fillna("C")
+    df["priority"] = df["complaint_category"].map(priority_map).fillna("C")
     df["priority_label"] = df["priority"].map(PRIORITY_LABELS).fillna("Normal (C)")
 
     # response time in days
-    df["response_days"] = (df["disposition_date"] - df["date_entered"]).dt.days.clip(lower=0)
+    df["resp_days"] = (df["disposition_date"] - df["date_entered"]).dt.days.clip(lower=0)
 
     df["year"] = df["date_entered"].dt.year
     df["month"] = df["date_entered"].dt.to_period("M").dt.to_timestamp()
@@ -255,7 +255,7 @@ if emergency_count > HIGH_COMPLAINT_THRESHOLD:
 total = len(df)
 resolved = len(df[df["status"].str.upper().str.contains("CLOSED|RESOLVED|DONE", na=False)])
 resolution_rate = resolved / total * 100 if total > 0 else 0
-avg_response = df["response_days"].dropna().mean()
+avg_response = df["resp_days"].dropna().mean()
 top_boro = df["borough"].value_counts().idxmax() if not df.empty else "N/A"
 
 c1, c2, c3, c4, c5 = st.columns(5)
@@ -652,14 +652,14 @@ with tab4:
         > response time calculations.
         """)
 
-    df_resp = df_f.dropna(subset=["response_days"])
+    df_resp = df_f.dropna(subset=["resp_days"])
 
     if df_resp.empty:
         st.info("No response time data available.")
     else:
-        avg_resp = df_resp["response_days"].mean()
-        median_resp = df_resp["response_days"].median()
-        max_resp = df_resp["response_days"].max()
+        avg_resp = df_resp["resp_days"].mean()
+        median_resp = df_resp["resp_days"].median()
+        max_resp = df_resp["resp_days"].max()
 
         r1, r2, r3 = st.columns(3)
         r1.metric("Avg Response Time", f"{avg_resp:.1f} days", border=True)
@@ -668,11 +668,11 @@ with tab4:
 
         # response time by borough
         resp_boro = (
-            df_resp.groupby(BOROUGH_COL)["response_days"]
+            df_resp.groupby(BOROUGH_COL)["resp_days"]
             .mean()
             .round(1)
             .reset_index()
-            .rename(columns={BOROUGH_COL: "Borough", "response_days": "Avg Days"})
+            .rename(columns={BOROUGH_COL: "Borough", "resp_days": "Avg Days"})
             .sort_values("Avg Days", ascending=False)
         )
         resp_boro["Borough"] = resp_boro["Borough"].str.title()
@@ -691,11 +691,11 @@ with tab4:
 
         # response time by priority
         resp_pri = (
-            df_resp.groupby("priority_label")["response_days"]
+            df_resp.groupby("priority_label")["resp_days"]
             .mean()
             .round(1)
             .reset_index()
-            .rename(columns={"priority_label": "Priority", "response_days": "Avg Days"})
+            .rename(columns={"priority_label": "Priority", "resp_days": "Avg Days"})
         )
         fig_resp_pri = px.bar(
             resp_pri.sort_values("Avg Days", ascending=False),
@@ -712,7 +712,7 @@ with tab4:
         slowest_boro = resp_boro.iloc[0]
         if slowest_boro["Avg Days"] > 30:  # noqa: PLR2004
             caution_box(
-                f"<strong>{slowest_boro['Borough']}</strong> has the slowest average response time — "
+                f"<strong>{slowest_boro['Borough']}</strong> has the slowest average response time "
                 f"<strong>{slowest_boro['Avg Days']:.1f} days</strong> on average."
             )
         else:
@@ -722,13 +722,14 @@ with tab4:
 
         # response time distribution histogram
         st.markdown("### Response Time Distribution")
+        year = 365
         fig_hist = px.histogram(
-            df_resp[df_resp["response_days"] <= 365],
-            x="response_days",
+            df_resp[df_resp["resp_days"] <= year],
+            x="resp_days",
             nbins=50,
             title="Distribution of Response Times (days, capped at 1 year)",
             color_discrete_sequence=[DEEP_BLUE],
-            labels={"response_days": "Days to Resolution"},
+            labels={"resp_days": "Days to Resolution"},
         )
         fig_hist.update_layout(bargap=0.05)
         st.plotly_chart(apply_chart_theme(fig_hist), use_container_width=True)

@@ -119,7 +119,7 @@ evictions, complaints, and facade inspections geographically and over time.
 Additional visualizations include:
 
 - **Choropleth maps** showing eviction rates, unsafe facade counts, and permit activity by borough.
-- **Time-series charts** showing trends in construction filings, complaints, and evictions over time.
+- **Time-series charts** showing trends in construction filing, complaints, and evictions over time
 - **Heatmaps** comparing boroughs across indicators such as permit types and construction decades.
 - **Anomaly detection charts** flagging months with unusually high eviction activity.
 - **Gauge charts** showing facade safety rates (Safe, SWARMP, Unsafe).

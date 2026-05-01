@@ -112,5 +112,5 @@ after the initial query.
 
 info_box(
     "Data is refreshed daily at 6am UTC via GitHub Actions. "
-    "If charts appear outdated, try clearing the Streamlit cache by pressing <strong>C</strong> on your keyboard."
+    "If charts appear outdated, try clearing the Streamlit cache by pressing <strong>C</strong>."
 )

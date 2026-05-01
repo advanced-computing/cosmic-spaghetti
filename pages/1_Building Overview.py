@@ -862,7 +862,7 @@ with tab4:
             |---|---|---|
             | ✅ **SAFE** | No problems found | None — next inspection in 5 years |
             | ⚠️ **SWARMP** | Safe now but needs repair | Repairs required before next cycle |
-            | 🚨 **UNSAFE** | Immediate danger to public | Emergency repairs required; DOB issues violations |
+            | 🚨 **UNSAFE** | Immediate danger to public | Emergency repairs required; violations |
             | 📋 **No Report Filed** | Owner has not submitted | Subject to $1,000/month penalty |
 
             **Current Cycle:** Cycle 10 (2025–2030)
@@ -992,7 +992,7 @@ with tab4:
                 unsafe_by_boro.sort_values("Unsafe Filings", ascending=False),
                 x="Borough",
                 y="Unsafe Filings",
-                title=f"Unsafe Filings by Borough — Cycles {selected_cycles[0]}–{selected_cycles[1]}",
+                title=f"Unsafe Filings by Borough, Cycle {selected_cycles[0]}–{selected_cycles[1]}",
                 color="Unsafe Filings",
                 color_continuous_scale=COLOR_SCALE_RISK,
                 text="Unsafe Filings",
@@ -1019,7 +1019,7 @@ with tab4:
             mapbox_style="carto-positron",
             zoom=9.5,
             center={"lat": 40.7128, "lon": -74.0060},
-            title=f"At Risk Facades (SWARMP + Unsafe) — Cycles {selected_cycles[0]}–{selected_cycles[1]}",
+            title=f"At Risk Facade(SWARMP+Unsafe):Cycles {selected_cycles[0]}–{selected_cycles[1]}",
             hover_name="Borough",
         )
         st.plotly_chart(apply_chart_theme(fig_risk_map), use_container_width=True)
@@ -1043,7 +1043,7 @@ with tab4:
             df_rates,
             x="Borough",
             y="Unsafe Rate (%)",
-            title=f"Unsafe Facade Rate by Borough — Cycles {selected_cycles[0]}–{selected_cycles[1]}",
+            title=f"Unsafe Facade Rate by Borough: Cycle {selected_cycles[0]}–{selected_cycles[1]}",
             color="Unsafe Rate (%)",
             color_continuous_scale=COLOR_SCALE_RISK,
             text="Unsafe Rate (%)",
