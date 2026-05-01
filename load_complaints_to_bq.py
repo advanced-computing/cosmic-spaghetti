@@ -1,5 +1,4 @@
 # import libraries
-
 import google.auth
 import pandas as pd
 import pandas_gbq
@@ -10,7 +9,9 @@ project_id = "sipa-adv-c-cosmic-spaghetti"
 table_id = "cosmic_spaghetti.complaints"
 url = "https://data.cityofnewyork.us/resource/eabe-havv.json"
 limit = 50000
-MAX_ROWS = 200_000
+MAX_ROWS = 500_000
+MIN_YEAR = 2015
+
 
 # local authentication
 credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/bigquery"])
@@ -19,7 +20,8 @@ pandas_gbq.context.project = project_id
 
 
 def fetch_complaints() -> pd.DataFrame:
-    """Pull all available complaints from NYC Open Data API."""
+    """Pull complaints from 2015 onwards from NYC Open Data API.
+    Fetches ordered by most recent first, stops when records go before 2015."""
     all_records = []
     offset = 0
     session = requests.Session()
@@ -41,9 +43,17 @@ def fetch_complaints() -> pd.DataFrame:
         offset += limit
         print(f"  Fetched {offset} rows so far...")
 
-        # stop after 200k rows to keep it manageable
+        # stop early if oldest record in chunk is before 2015
+        chunk_df = pd.DataFrame(chunk)
+        if "date_entered" in chunk_df.columns:
+            oldest = pd.to_datetime(chunk_df["date_entered"].iloc[-1], errors="coerce")
+            if oldest is not pd.NaT and oldest.year < MIN_YEAR:
+                print(f"  Reached records before {MIN_YEAR} — stopping early.")
+                break
+
+        # safety cap
         if offset >= MAX_ROWS:
-            print("  Reached 200k rows limit — stopping.")
+            print(f"  Reached {MAX_ROWS:,} row limit — stopping.")
             break
 
         if len(chunk) < limit:
@@ -51,13 +61,17 @@ def fetch_complaints() -> pd.DataFrame:
 
     df = pd.DataFrame(all_records)
     df["date_entered"] = pd.to_datetime(df["date_entered"], errors="coerce")
+
+    # filter to 2015 onwards in Python to catch any stray older records
+    df = df[df["date_entered"].dt.year >= MIN_YEAR]
+    print(f"  After filtering to {MIN_YEAR}+: {len(df):,} rows")
     print(f"  Date range: {df['date_entered'].min()} to {df['date_entered'].max()}")
     return df
 
 
 def upload_to_bq(df: pd.DataFrame) -> None:
     """Technique: TRUNCATE (replace)
-    Complaints data is filtered to last 1 year.
+    Complaints data filtered to 2015 onwards.
     Full refresh ensures BigQuery always reflects the latest data."""
     pandas_gbq.to_gbq(
         df,
@@ -70,9 +84,8 @@ def upload_to_bq(df: pd.DataFrame) -> None:
 
 # Main
 if __name__ == "__main__":
-    print("Fetching complaints data from NYC Open Data (last 1 year)...")
+    print(f"Fetching complaints data from NYC Open Data ({MIN_YEAR} onwards)...")
     df = fetch_complaints()
-    print(f"Total rows fetched: {len(df):,}")
-    print(f"Date range: {df['date_entered'].min()} to {df['date_entered'].max()}")
+    print(f"Total rows loaded: {len(df):,}")
     upload_to_bq(df)
     print("Done! Check BigQuery console to verify the table.")
