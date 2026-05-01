@@ -1,96 +1,104 @@
 import time
-from contextlib import contextmanager
 
 import streamlit as st
 
-st.set_page_config(page_title="Proposal")
+from functions.theme import apply_css, page_header
 
+st.set_page_config(page_title="Proposal", layout="wide")
+apply_css()
 
-# add page load time
-@contextmanager
-def display_load_time():
-    start_time = time.time()
+start_time = time.time()
 
-    try:
-        yield
-    finally:
-        elapsed = time.time() - start_time
-        st.caption(f"Page loaded in {elapsed:.2f} seconds")
+page_header(
+    "Project Proposal",
+    "NYC Building Insights: Unraveling the Web of NYC Building Data",
+)
 
-
-with display_load_time():
-    st.title("Project Proposal: NYC Building Insights: Unraveling the Web of NYC Building Data")
-
-    # Original Proposal
-    st.subheader("Project Overview")
-
-    st.write("""
+# ── Project Overview ──────────────────────────────────────────────────────────
+st.markdown("### Project Overview")
+st.write("""
 We are planning to explore several NYC open datasets to better understand the relationship
-between construction activity, housing conditions, and socioeconomic factors across New York City.
+between construction activity, housing conditions, and socioeconomic factors across
+New York City.
 """)
-    st.divider()
 
-    # Main datasets
-    with st.container(border=True):
-        st.subheader("Main Datasets")
+st.divider()
 
-        st.markdown("""
-**1. DOB-Now Job Permit**
-Records historical job permit in NYC such as work type (new building, demolition, etc.).
+# ── Main Datasets ─────────────────────────────────────────────────────────────
+with st.container(border=True):
+    st.markdown("### Main Datasets")
+    st.markdown("""
+**1. DOB NOW Build: Approved Permits**
+Records historical job permits in NYC such as work type (new building, demolition, etc.).
 Provides insights about construction patterns across NYC.
-[Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-NOW-Build-Approved-Permits/rbx6-tga4/about_data)
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-NOW-Build-Approved-Permits/rbx6-tga4/about_data)
 
-**2. NYC Evictions**
+**2. DOB Permit Issuance**
+Records permits issued by the NYC Department of Buildings including job type,
+borough, and filing dates. Covers new buildings, alterations, and demolitions.
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Permit-Issuance/ipu4-2q9a/about_data)
+
+**3. NYC Evictions**
 Executed residential evictions across the five boroughs since 2017, sortable by borough,
 building type, and date.
-[Dataset](https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4/about_data)
+[View Dataset](https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4/about_data)
+
+**4. DOB Complaints Received**
+Records complaints submitted by tenants or members of the public. Includes complaint category,
+source, location, and response status.
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Complaints-Received/eabe-havv/about_data)
+
+**5. DOB NOW: Safety Facade Compliance Filings (FISP)**
+Records facade inspection filings for buildings taller than 6 stories, including
+filing status (Safe, SWARMP, Unsafe) and inspection cycle.
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-NOW-Safety-Facade-Compliance-Filings/xubg-57si/about_data)
+
+**6. NYC Building Footprints**
+Contains building geometry, construction year, height, and borough for all
+buildings in New York City.
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/Building-Footprints/nqwf-w8eh/about_data)
+""")
+
+st.write("")
+
+# ── Additional Datasets ───────────────────────────────────────────────────────
+with st.container(border=True):
+    st.markdown("### Additional Datasets Considered")
+    st.markdown("""
+**1. DOB Violations**
+Records violations recorded by the DOB including violation type, severity, location, and status.
+Reflects compliance issues related to building safety, zoning, and construction regulations.
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Violations/3h2n-5cm9/about_data)
+
+**2. DOB Disciplinary Actions**
+Records disciplinary actions taken against professionals or entities (e.g. contractors, engineers)
+for violations or misconduct. Includes action types, outcomes, and associated cases.
+[View Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Disciplinary-Actions/ndq3-kuef/about_data)
 
 **3. ACS Census Income Data**
 Median household income aggregated at the county (borough) level from the U.S. Census Bureau's
 American Community Survey. Updated annually or every five years.
 """)
 
-    st.write("")
+st.divider()
 
-    # Additional / Potential Datasets Box
-    with st.container(border=True):
-        st.subheader("Additional datasets being considered")
-
-        st.markdown("""
-**1. DOB Violations**
-Records violations recorded by the DOB including violation type, severity, location, and status.
-Reflects compliance issues related to building safety, zoning, and construction regulations.
-[Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Violations/3h2n-5cm9/about_data)
-
-**2. DOB Complaints Received**
-Records complaints submitted by tenants or members of the public. Includes complaint category,
-source, location, and response status.
-[Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Complaints-Received/eabe-havv/about_data)
-
-**3. DOB Disciplinary Actions**
-Records disciplinary actions taken against professionals or entities (e.g., contractors, engineers)
-for violations or misconduct. Includes action types, outcomes, and associated cases.
-[Dataset](https://data.cityofnewyork.us/Housing-Development/DOB-Disciplinary-Actions/ndq3-kuef/about_data)
+# ── Research Questions ────────────────────────────────────────────────────────
+with st.container(border=True):
+    st.markdown("### Research Questions")
+    st.write("""
+Following the feedback on our initial proposal, we combined multiple datasets to better
+understand relationships between construction activity, housing conditions, and eviction
+trends across New York City.
 """)
-
-    st.divider()
-
-    # Research Questions
-    with st.container(border=True):
-        st.subheader("Research Questions")
-        st.write("""Following the feedback on our initial proposal, we are planning to combine
-             different datasets to better understand relationships between construction activity,
-             housing conditions, and eviction trends across New York City.
-""")
-        st.markdown("""
+    st.markdown("""
 **1. How does construction activity relate to eviction patterns across NYC boroughs?**
 We are interested in exploring whether areas with higher levels of construction activity
 (such as new building permits or major renovations) also experience higher eviction rates.
 This may reveal patterns related to redevelopment or potential housing displacement.
 
-**2. Are building complaints and violations associated with eviction outcomes?**
-The dashboard will allow users to investigate whether buildings with more complaints or safety
-violations are also more likely to experience evictions, helping identify possible links
+**2. Are building complaints and facade conditions associated with eviction outcomes?**
+The dashboard allows users to investigate whether buildings with more complaints or unsafe
+facade filings are also more likely to experience evictions, helping identify possible links
 between housing conditions and tenant displacement.
 
 **3. How do socioeconomic conditions relate to housing enforcement and evictions?**
@@ -98,43 +106,63 @@ We are also interested in exploring whether boroughs with lower median household
 experience higher rates of complaints, violations, or evictions.
 """)
 
-    st.write("")
+st.write("")
 
-    # Target Visualization
-    with st.container(border=True):
-        st.subheader("Target Visualizations")
+# ── Target Visualizations ─────────────────────────────────────────────────────
+with st.container(border=True):
+    st.markdown("### Target Visualizations")
+    st.markdown("""
+Our main visualization is an **interactive dashboard** displaying housing and building-related
+data by borough across New York City. Users can explore patterns in construction activity,
+evictions, complaints, and facade inspections geographically and over time.
 
-        st.markdown("""
-Our main visualization will be an **interactive map of New York City** displaying housing
-and building-related data by borough or neighborhood. Users will be able to explore patterns
-in construction activity, evictions, and housing violations geographically.
+Additional visualizations include:
 
-Additional visualizations may include:
-
-- **Time-series charts** showing trends in construction filings and evictions over time.
-- **Bar charts** comparing boroughs across indicators such as complaints, violations,
-  and income levels.
+- **Choropleth maps** showing eviction rates, unsafe facade counts, and permit activity by borough.
+- **Time-series charts** showing trends in construction filing, complaints, and evictions over time
+- **Heatmaps** comparing boroughs across indicators such as permit types and construction decades.
+- **Anomaly detection charts** flagging months with unusually high eviction activity.
+- **Gauge charts** showing facade safety rates (Safe, SWARMP, Unsafe).
 """)
 
-    st.write("")
+st.write("")
 
-    # Known Unknowns + Challenges
-    with st.container(border=True):
-        st.subheader("Known Unknowns and Anticipated Challenges")
+# ── How the App Evolved ───────────────────────────────────────────────────────
+with st.container(border=True):
+    st.markdown("### How the Project Evolved")
+    st.markdown("""
+Our original proposal focused primarily on evictions and income data. Through the course of
+the project, we expanded the scope significantly to include:
 
-        st.markdown("""
+- **Building footprints** to analyze construction density by borough.
+- **DOB permit data** from two separate systems (DOB NOW and DOB Permit Issuance)
+  that required schema normalization and combined loading.
+- **Facade inspection data (FISP)** to track building safety trends across inspection cycles.
+- **DOB complaints data** with priority classification and response time analysis.
+
+We also built a full ETL pipeline with automated daily refresh via GitHub Actions,
+storing all data in Google BigQuery for fast dashboard queries.
+""")
+
+st.write("")
+
+# ── Known Unknowns + Challenges ───────────────────────────────────────────────
+with st.container(border=True):
+    st.markdown("### Known Unknowns and Anticipated Challenges")
+    st.markdown("""
 **Known Unknowns**
 
 - Differences in geographic granularity across datasets (borough vs ZIP vs address level).
-- Difficulty joining datasets due to inconsistent formats or identifiers.
+- Difficulty joining datasets due to inconsistent column names and date formats across APIs.
 - Uncertainty about how strong relationships between datasets will appear in the data.
-- Changes in API that affects functions and/or visualization pages.
+- Changes in NYC Open Data APIs that affect column availability or data freshness.
 
 **Anticipated Challenges**
 
-- Cleaning and standardizing large NYC open datasets.
-- Handling large dataset sizes efficiently in the dashboard.
-- Designing visualizations that communicate complex relationships clearly without
-  overwhelming users.
-- Understanding the difference of loading streamlit in local computer and web.
+- Cleaning and standardizing large NYC open datasets with inconsistent schemas.
+- Handling API limitations (no SELECT on geometry columns, null date fields, rate limits).
+- Designing visualizations that communicate complex relationships clearly.
+- Managing BigQuery free tier constraints (no DML, truncate-only refresh strategy).
 """)
+
+st.caption(f"Page loaded in {time.time() - start_time:.2f} seconds")
